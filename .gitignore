@@ -1,0 +1,14 @@
+# Ignore node_modules for both subdirectories
+my-app/node_modules/
+server/node_modules/
+
+# Ignore dist directories for both subdirectories
+my-app/dist/
+server/dist/
+
+# Ignore environment files
+my-app/.env
+server/.env
+
+# Ignore build output for Next.js (if applicable)
+my-app/.next/

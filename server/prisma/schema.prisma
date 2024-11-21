@@ -1,0 +1,76 @@
+// Prisma Schemas DB
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+    userId Int @id @default(autoincrement())
+    cognitoId String @unique
+    username String @unique
+    profilePictureUrl String? // Do we want this to NOT be null?
+    groupId Int?
+
+    calendar Calendar[]
+    friends Friends[]
+    group Group? @relation(fields: [groupId], references: [id])
+}
+
+model Calendar {
+    id Int @id @default(autoincrement())
+    name String
+    description String?
+    startDate DateTime?
+    endDate DateTime?
+    hour Int? // Add the hour ?
+
+    events Event[]
+}
+
+model Friend {
+    
+}
+
+model Template {
+
+    // Contain Date, venue, food, decorator, host
+}
+
+model Group {
+    id Int @id default(autoIncrement())
+    groupName String
+    groupOwnerUserId Int? // NOT NULL?
+    user User[]
+}
+
+model Event {
+    id Int @id @default(autoincrement())
+    title String
+    description String?
+    status String?
+    tags String?
+    startDate DateTime?
+    endDate DateTime?
+    calendarId Int
+    authorUserId Int
+    
+    calendar Calendar @relation(fields: [calendarId], references: [id])
+    author User @relation["EventAuthor", fields: [authorUserId], references: [userId]]
+    attachments Attachment[]
+}
+
+model Attachment {
+  id           Int     @id @default(autoincrement())
+  fileURL      String
+  fileName     String?
+  taskId       Int
+  uploadedById Int
+
+  event       Event @relation(fields: [taskId], references: [id])
+  uploadedBy User @relation(fields: [uploadedById], references: [userId])
+}
