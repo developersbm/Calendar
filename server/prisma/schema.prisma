@@ -1,4 +1,3 @@
-// Prisma Schemas DB
 generator client {
   provider      = "prisma-client-js"
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
@@ -9,68 +8,169 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-    userId Int @id @default(autoincrement())
-    cognitoId String @unique
-    username String @unique
-    profilePictureUrl String? // Do we want this to NOT be null?
-    groupId Int?
+model Membership {
+  id             Int       @id @default(autoincrement())
+  type           String    // Free or Premium
+  maxFriends     Int
+  maxTemplates   Int
+  maxGroups      Int
+  maxSavingPlans Int
+  users          User[]
 
-    calendar Calendar[]
-    friends Friends[]
-    group Group? @relation(fields: [groupId], references: [id])
+  @@map("memberships")
 }
 
-model Calendar {
-    id Int @id @default(autoincrement())
-    name String
-    description String?
-    startDate DateTime?
-    endDate DateTime?
-    hour Int? // Add the hour ?
+model User {
+  id          Int       @id @default(autoincrement())
+  name        String
+  email       String    @unique
+  cognitoId   String    @unique
+  membershipId Int
+  membership  Membership @relation(fields: [membershipId], references: [id])
+  calendarId  Int
+  calendar    Calendar  @relation(fields: [calendarId], references: [id])
+  friends     Friend[]   @relation("Requester")
+  friendOf    Friend[]   @relation("Friend")
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  deletedAt   DateTime?  // Soft delete support
 
-    events Event[]
+  GroupMember GroupMember[]
+  EventParticipant EventParticipant[]
+  Notification Notification[]
+  AuditLog AuditLog[]
+
+  @@map("users")
 }
 
 model Friend {
-    
-}
+  id          Int      @id @default(autoincrement())
+  requesterId Int
+  friendId    Int
+  status      String   // Pending, Accepted, Rejected
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  requester   User     @relation("Requester", fields: [requesterId], references: [id])
+  friend      User     @relation("Friend", fields: [friendId], references: [id])
 
-model Template {
-
-    // Contain Date, venue, food, decorator, host
+  @@unique([requesterId, friendId]) // Ensure each pair is unique
+  @@map("friends")
 }
 
 model Group {
-    id Int @id default(autoIncrement())
-    groupName String
-    groupOwnerUserId Int? // NOT NULL?
-    user User[]
+  id          Int           @id @default(autoincrement())
+  title       String
+  description String?
+  iconUrl     String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  members     GroupMember[]
+  calendar    Calendar     @relation(fields: [calendarId], references: [id])
+  calendarId  Int
+
+  @@map("groups")
+}
+
+model GroupMember {
+  groupId   Int
+  userId    Int
+  role      String       // Admin, Member
+  status    String       // Active, Pending, Left
+  group     Group        @relation(fields: [groupId], references: [id])
+  user      User         @relation(fields: [userId], references: [id])
+
+  @@id([groupId, userId])
+  @@map("group_members")
+}
+
+model Calendar {
+  id          Int       @id @default(autoincrement())
+  ownerId     Int
+  ownerType   String    // User or Group
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  events      Event[]
+
+  @@map("calendars")
+  User User[]
+  Group Group[]
 }
 
 model Event {
-    id Int @id @default(autoincrement())
-    title String
-    description String?
-    status String?
-    tags String?
-    startDate DateTime?
-    endDate DateTime?
-    calendarId Int
-    authorUserId Int
-    
-    calendar Calendar @relation(fields: [calendarId], references: [id])
-    author User @relation["EventAuthor", fields: [authorUserId], references: [userId]]
-    attachments Attachment[]
+  id             Int               @id @default(autoincrement())
+  title          String
+  description    String?
+  startTime      DateTime
+  endTime        DateTime
+  recurrence     String?           // Recurring event type (daily, weekly, monthly)
+  endRecurrence  DateTime?         // End date for recurrence
+  calendarId     Int
+  calendar       Calendar          @relation(fields: [calendarId], references: [id])
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  participants   EventParticipant[]
+
+  @@map("events")
 }
 
-model Attachment {
-  id           Int     @id @default(autoincrement())
-  fileURL      String
-  fileName     String?
-  taskId       Int
-  uploadedById Int
+model EventParticipant {
+  eventId Int
+  userId  Int
+  status  String       // Accepted, Declined, Pending
+  event   Event         @relation(fields: [eventId], references: [id])
+  user    User          @relation(fields: [userId], references: [id])
 
-  event       Event @relation(fields: [taskId], references: [id])
-  uploadedBy User @relation(fields: [uploadedById], references: [userId])
+  @@id([eventId, userId])
+  @@map("event_participants")
+}
+
+model Template {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String?
+  ownerId     Int
+  elements    Json
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  savingPlans SavingPlan[]
+
+  @@map("templates")
+}
+
+model SavingPlan {
+  id             Int       @id @default(autoincrement())
+  templateId     Int
+  goalAmount     Float
+  currentBalance Float
+  frequency      String
+  linkedTemplate Template   @relation(fields: [templateId], references: [id])
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@map("saving_plans")
+}
+
+model Notification {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  type        String   // Event Invitation, Friend Request, Saving Plan Reminder
+  status      String   // Read, Unread
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+model AuditLog {
+  id          Int      @id @default(autoincrement())
+  actionType  String   // Create, Update, Delete
+  entityType  String   // User, Group, Event, etc.
+  userId      Int
+  details     Json?    // Additional metadata for actions
+  timestamp   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
 }
