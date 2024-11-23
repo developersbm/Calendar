@@ -11,7 +11,7 @@ datasource db {
 model Membership {
   id             Int       @id @default(autoincrement())
   type           String    // Free or Premium
-  maxFriends     Int
+  maxFriends     Int       // Optionally remove if "friends" feature is no longer relevant
   maxTemplates   Int
   maxGroups      Int
   maxSavingPlans Int
@@ -21,40 +21,24 @@ model Membership {
 }
 
 model User {
-  id          Int       @id @default(autoincrement())
-  name        String
-  email       String    @unique
-  cognitoId   String    @unique
-  membershipId Int
-  membership  Membership @relation(fields: [membershipId], references: [id])
-  calendarId  Int
-  calendar    Calendar  @relation(fields: [calendarId], references: [id])
-  friends     Friend[]   @relation("Requester")
-  friendOf    Friend[]   @relation("Friend")
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  deletedAt   DateTime?  // Soft delete support
+  id               Int       @id @default(autoincrement())
+  name             String
+  email            String    @unique
+  cognitoId        String    @unique
+  membershipId     Int
+  membership       Membership @relation(fields: [membershipId], references: [id])
+  calendarId       Int
+  calendar         Calendar  @relation(fields: [calendarId], references: [id])
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  deletedAt        DateTime?  // Soft delete support
 
-  GroupMember GroupMember[]
+  GroupMember      GroupMember[]
   EventParticipant EventParticipant[]
-  Notification Notification[]
-  AuditLog AuditLog[]
+  Notification     Notification[]
+  AuditLog         AuditLog[]
 
   @@map("users")
-}
-
-model Friend {
-  id          Int      @id @default(autoincrement())
-  requesterId Int
-  friendId    Int
-  status      String   // Pending, Accepted, Rejected
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  requester   User     @relation("Requester", fields: [requesterId], references: [id])
-  friend      User     @relation("Friend", fields: [friendId], references: [id])
-
-  @@unique([requesterId, friendId]) // Ensure each pair is unique
-  @@map("friends")
 }
 
 model Group {

@@ -10,7 +10,6 @@ Defines user membership levels and their associated limits.
   - Membership ID: Primary key
   - Type: `Free` or `Premium`
   - Limits:
-    - Max number of friends
     - Max number of templates
     - Max number of groups
     - Max number of active saving plans
@@ -28,23 +27,9 @@ Represents individual users, their settings, and relationships.
   - Calendar ID: Foreign key linked to the `Calendar` table
   - Membership ID: Foreign key linked to the `Membership` table
   - Created At / Updated At: Timestamps for tracking
-  - Friends List: References the `Friends` table
   - Groups List: References the `Groups` table
 - **Relationships**:
-  - A user can have multiple friends and belong to multiple groups.
-
----
-
-### Friends
-Tracks friendships between users.
-- **Attributes**:
-  - Friendship ID: Primary key
-  - User ID 1, User ID 2: Foreign keys referencing `User`
-  - Status: Pending, Accepted, Rejected
-  - Created At: Timestamp for relationship initiation
-- **Relationships**:
-  - A user can request friendships via unique friend IDs or invite links.
-  - Friendship interactions reference the `User` table.
+  - A user can belong to multiple groups.
 
 ---
 
@@ -136,11 +121,11 @@ Tracks savings for user goals, often tied to templates.
 ## Additional Optimizations
 
 ### Notifications
-Track notifications for user interactions such as event invitations, friendship requests, or saving plan reminders.
+Track notifications for user interactions such as event invitations or saving plan reminders.
 - **Attributes**:
   - Notification ID: Primary key
   - User ID: Foreign key referencing `User`
-  - Type: Event Invitation, Friend Request, Saving Plan Reminder
+  - Type: Event Invitation, Saving Plan Reminder
   - Status: Read, Unread
   - Created At: Timestamp
 - **Relationships**:
