@@ -1,0 +1,115 @@
+[
+    {
+      "id": 1,
+      "ownerId": 1,
+      "ownerType": "User",
+      "description": "Sebas' personal calendar.",
+      "createdAt": "2024-11-22T12:00:00Z",
+      "updatedAt": "2024-11-22T12:00:00Z"
+    },
+    {
+      "id": 2,
+      "ownerId": 2,
+      "ownerType": "User",
+      "description": "Ramon's personal calendar.",
+      "createdAt": "2024-11-21T08:30:00Z",
+      "updatedAt": "2024-11-21T08:30:00Z"
+    },
+    {
+      "id": 3,
+      "ownerId": 3,
+      "ownerType": "User",
+      "description": "Tony's personal calendar.",
+      "createdAt": "2024-11-20T15:00:00Z",
+      "updatedAt": "2024-11-20T15:00:00Z"
+    },
+    {
+      "id": 4,
+      "ownerId": 4,
+      "ownerType": "User",
+      "description": "Carlos' personal calendar.",
+      "createdAt": "2024-11-19T10:00:00Z",
+      "updatedAt": "2024-11-19T10:00:00Z"
+    },
+    {
+      "id": 5,
+      "ownerId": 5,
+      "ownerType": "User",
+      "description": "Jessica's personal calendar.",
+      "createdAt": "2024-11-18T12:00:00Z",
+      "updatedAt": "2024-11-18T12:00:00Z"
+    },
+    {
+      "id": 6,
+      "ownerId": 6,
+      "ownerType": "User",
+      "description": "Mark's personal calendar.",
+      "createdAt": "2024-11-17T09:00:00Z",
+      "updatedAt": "2024-11-17T09:00:00Z"
+    },
+    {
+      "id": 7,
+      "ownerId": 7,
+      "ownerType": "User",
+      "description": "Lisa's personal calendar.",
+      "createdAt": "2024-11-16T14:00:00Z",
+      "updatedAt": "2024-11-16T14:00:00Z"
+    },
+    {
+      "id": 8,
+      "ownerId": 8,
+      "ownerType": "User",
+      "description": "Ben's personal calendar.",
+      "createdAt": "2024-11-15T13:30:00Z",
+      "updatedAt": "2024-11-15T13:30:00Z"
+    },
+    {
+      "id": 9,
+      "ownerId": 9,
+      "ownerType": "User",
+      "description": "Nancy's personal calendar.",
+      "createdAt": "2024-11-14T18:00:00Z",
+      "updatedAt": "2024-11-14T18:00:00Z"
+    },
+    {
+      "id": 10,
+      "ownerId": 10,
+      "ownerType": "User",
+      "description": "Peter's personal calendar.",
+      "createdAt": "2024-11-13T07:00:00Z",
+      "updatedAt": "2024-11-13T07:00:00Z"
+    },
+    {
+      "id": 11,
+      "ownerId": 1,
+      "ownerType": "Group",
+      "description": "Family group's calendar.",
+      "createdAt": "2024-11-22T12:00:00Z",
+      "updatedAt": "2024-11-22T12:00:00Z"
+    },
+    {
+      "id": 12,
+      "ownerId": 2,
+      "ownerType": "Group",
+      "description": "Work Team group's calendar.",
+      "createdAt": "2024-11-21T08:30:00Z",
+      "updatedAt": "2024-11-21T08:30:00Z"
+    },
+    {
+      "id": 13,
+      "ownerId": 3,
+      "ownerType": "Group",
+      "description": "Gym Buddies group's calendar.",
+      "createdAt": "2024-11-20T15:00:00Z",
+      "updatedAt": "2024-11-20T15:00:00Z"
+    },
+    {
+      "id": 14,
+      "ownerId": 4,
+      "ownerType": "Group",
+      "description": "Book Club group's calendar.",
+      "createdAt": "2024-11-19T10:00:00Z",
+      "updatedAt": "2024-11-19T10:00:00Z"
+    }
+]
+  

@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "title": "Family",
+    "description": "This is a group for our family!",
+    "iconUrl": "/img/family.png",
+    "createdAt": "2024-11-22T12:00:00Z",
+    "updatedAt": "2024-11-22T12:00:00Z",
+    "calendarId": 1
+  },
+  {
+    "id": 2,
+    "title": "Work Team",
+    "description": "Group for work-related discussions and tasks.",
+    "iconUrl": "/img/work.png",
+    "createdAt": "2024-11-21T08:30:00Z",
+    "updatedAt": "2024-11-21T08:30:00Z",
+    "calendarId": 2
+  },
+  {
+    "id": 3,
+    "title": "Gym Buddies",
+    "description": "Fitness group for tracking workouts and sharing tips.",
+    "iconUrl": "/img/gym.png",
+    "createdAt": "2024-11-20T15:00:00Z",
+    "updatedAt": "2024-11-20T15:00:00Z",
+    "calendarId": 3
+  },
+  {
+    "id": 4,
+    "title": "Book Club",
+    "description": "Monthly book club for avid readers.",
+    "iconUrl": "/img/book.png",
+    "createdAt": "2024-11-19T10:00:00Z",
+    "updatedAt": "2024-11-19T10:00:00Z",
+    "calendarId": 4
+  }
+]
