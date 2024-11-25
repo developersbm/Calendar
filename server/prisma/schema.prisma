@@ -31,7 +31,6 @@ model User {
   calendar         Calendar  @relation(fields: [calendarId], references: [id])
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
-  deletedAt        DateTime?  // Soft delete support
 
   GroupMember      GroupMember[]
   EventParticipant EventParticipant[]
@@ -75,7 +74,12 @@ model Calendar {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   events      Event[]
+  
+  // Composite unique constraint for ownerId and ownerType
+  @@unique([ownerId, ownerType])
 
+  // Optional: Composite index for faster filtering by ownerId and ownerType
+  @@index([ownerId, ownerType])
   @@map("calendars")
   User User[]
   Group Group[]
