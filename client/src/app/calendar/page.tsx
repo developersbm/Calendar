@@ -1,10 +1,11 @@
-"use client";
-import Image from "next/image";
+import CalendarComponent from '@/components/CalendarComponent/page';
 
-export default function Calendar() {
+const CalendarScreen = () => {
   return (
-    <div className="">
-        <h1>Calendar</h1>
+    <div className="flex justify-center items-center h-[70vh]">
+        <CalendarComponent />
     </div>
   );
-}
+};
+
+export default CalendarScreen;
