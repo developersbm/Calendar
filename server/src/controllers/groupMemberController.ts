@@ -3,6 +3,16 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+// Fetch all group members
+export const getAllMembers = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const members = await prisma.groupMember.findMany();
+        res.json(members);
+    } catch (error: any) {
+        res.status(500).json({ message: `Error fetching all members: ${error.message}` });
+    }
+};
+
 // Fetch all members of a group
 export const getMembersByGroup = async (req: Request, res: Response): Promise<void> => {
     const { groupId } = req.params;

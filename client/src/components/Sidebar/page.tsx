@@ -1,22 +1,15 @@
 "use client";
 
+import { useGetUsersQuery, useGetGroupsQuery, useGetGroupMembersQuery, useGetTemplatesQuery } from "@/state/api";
 import { useAppDispatch, useAppSelector } from "@/app/redux";
 import { setIsSidebarCollapsed } from "@/state";
-import { useGetProjectsQuery } from "@/state/api";
 import {
-  AlertCircle,
-  AlertOctagon,
-  AlertTriangle,
   Briefcase,
   ChevronDown,
   ChevronUp,
   Home,
   Layers3,
-  LockIcon,
   LucideIcon,
-  Search,
-  Settings,
-  ShieldAlert,
   User,
   Users,
   X,
@@ -25,144 +18,152 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React, { useState } from "react";
+import profile from "../../../public/profile.png"
 
 const Sidebar = () => {
-  const [showProjects, setShowProjects] = useState(true);
-  const [showPriority, setShowPriority] = useState(true);
+const [showGroups, setShowGroups] = useState(true);
+const [showTemplate, setShowTemplate] = useState(true);
 
-  const { data: projects } = useGetProjectsQuery();
-  const dispatch = useAppDispatch();
-  const isSidebarCollapsed = useAppSelector(
-    (state) => state.global.isSidebarCollapsed,
-  );
+const { data: users } = useGetUsersQuery();
+const { data: groups } = useGetGroupsQuery();
+const { data: templates } = useGetTemplatesQuery();
+const { data: groupMembers } = useGetGroupMembersQuery();
 
-  const sidebarClassNames = `fixed flex flex-col h-[100%] justify-between shadow-xl
-    transition-all duration-300 h-full z-40 dark:bg-black overflow-y-auto bg-white
-    ${isSidebarCollapsed ? "w-0 hidden" : "w-64"}
-  `;
+const dispatch = useAppDispatch();
+const isSidebarCollapsed = useAppSelector(
+  (state) => state.global.isSidebarCollapsed,
+);
 
-  return (
-    <div className={sidebarClassNames}>
-      <div className="flex h-[100%] w-full flex-col justify-start">
-        {/* TOP LOGO */}
-        <div className="z-50 flex min-h-[56px] w-64 items-center justify-between bg-white px-6 pt-3 dark:bg-black">
-          <div className="text-xl font-bold text-gray-800 dark:text-white">
-            PLAN IT
-          </div>
-          {isSidebarCollapsed ? null : (
-            <button
-              className="py-3"
-              onClick={() => {
-                dispatch(setIsSidebarCollapsed(!isSidebarCollapsed));
-              }}
-            >
-              <X className="h-6 w-6 text-gray-800 hover:text-gray-500 dark:text-white" />
-            </button>
-          )}
+const sidebarClassNames = `fixed flex flex-col h-[100%] justify-between shadow-xl
+  transition-all duration-300 h-full z-40 dark:bg-black overflow-y-auto bg-white
+  ${isSidebarCollapsed ? "w-0 hidden" : "w-64"}
+`;
+
+const user = users?.find((user) => user.id === 1);
+
+// Filter groups the user belongs to
+const userGroups =
+  groupMembers
+    ?.filter((gm) => gm.userId === user?.id && gm.status === "Active")
+    .map((gm) => groups?.find((g) => g.id === gm.groupId)) || [];
+
+// Filter groups the user belongs to
+const userTemplates =
+  templates
+    ?.filter((tp) => tp.ownerId === user?.id) || [];
+
+
+return (
+  <div className={sidebarClassNames}>
+    <div className="flex h-[100%] w-full flex-col justify-start">
+      {/* TOP LOGO */}
+      <div className="z-50 flex min-h-[56px] w-64 items-center justify-between bg-white px-6 pt-3 dark:bg-black">
+        <div className="text-xl font-bold text-gray-800 dark:text-white">
+          PLAN IT
         </div>
-        {/* TEAM */}
+        {isSidebarCollapsed ? null : (
+          <button
+            className="py-3"
+            onClick={() => {
+              dispatch(setIsSidebarCollapsed(!isSidebarCollapsed));
+            }}
+          >
+            <X className="h-6 w-6 text-gray-800 hover:text-gray-500 dark:text-white" />
+          </button>
+        )}
+      </div>
+      {/* TEAM */}
+      {user ? (
         <div className="flex items-center gap-5 border-y-[1.5px] border-gray-200 px-8 py-4 dark:border-gray-700">
           <Image
-            src="/img.png"
-            alt="Logo"
+            src={profile}
+            alt=""
             width={40}
             height={40}
+            className="rounded-full"
           />
           <div>
             <h3 className="text-md font-bold tracking-wide dark:text-gray-200">
-              SEBAS GROUP
+              Welcome, {user.name}!
             </h3>
-            <div className="mt-1 flex items-start gap-2">
-              <LockIcon className="mt-[0.1rem] h-3 w-3 text-gray-500 dark:text-gray-400" />
-              <p className="text-xs text-gray-500">Private</p>
-            </div>
+            <p className="text-xs text-gray-500">Email: {user.email}</p>
           </div>
         </div>
-        {/* NAVBAR LINKS */}
-        <nav className="z-10 w-full">
-          <SidebarLink icon={Home} label="Home" href="/" />
-          <SidebarLink icon={Briefcase} label="Calendar" href="/timeline" />
-          <SidebarLink icon={User} label="Groups" href="/users" />
-          <SidebarLink icon={Users} label="Saving Plans" href="/teams" />
-        </nav>
+      ) : (
+        <p className="px-8 py-4 text-sm text-gray-500">
+          User with ID 1 not found.
+        </p>
+      )}
+      {/* NAVBAR LINKS */}
+      <nav className="z-10 w-full">
+        <SidebarLink icon={Home} label="Home" href="/" />
+        <SidebarLink icon={Briefcase} label="Calendar" href="/calendar" />
+        <SidebarLink icon={Users} label="Saving Plans" href="/savingPlans" />
+      </nav>
 
-        {/* PROJECTS LINKS */}
-        <button
-          onClick={() => setShowProjects((prev) => !prev)}
-          className="flex w-full items-center justify-between px-8 py-3 text-gray-500"
-        >
-          <span className="">Groups</span>
-          {showProjects ? (
-            <ChevronUp className="h-5 w-5" />
-          ) : (
-            <ChevronDown className="h-5 w-5" />
-          )}
-        </button>
-        {/* PROJECTS LIST */}
-        {showProjects &&
-          projects?.map((project) => (
+      {/* Groups LINKS */}
+      <button
+        onClick={() => setShowGroups((prev) => !prev)}
+        className="flex w-full items-center justify-between px-8 py-3 text-gray-500"
+      >
+        <span className="">Groups</span>
+        {showGroups ? (
+          <ChevronUp className="h-5 w-5" />
+        ) : (
+          <ChevronDown className="h-5 w-5" />
+        )}
+      </button>
+      {/* GROUPS LIST */}
+      {showGroups && userGroups?.length > 0 && (
+      <div className="flex flex-col">
+        {userGroups.map((group) =>
+          group ? (
             <SidebarLink
-              key={project.id}
+              key={group.id}
               icon={Briefcase}
-              label={project.name}
-              href={`/projects/${project.id}`}
+              label={group.title}
+              href={`/groups/${group.id}`}
             />
-          ))}
-
-        {/* PRIORITIES LINKS */}
-        <button
-          onClick={() => setShowPriority((prev) => !prev)}
-          className="flex w-full items-center justify-between px-8 py-3 text-gray-500"
-        >
-          <span className="">Templates</span>
-          {showPriority ? (
-            <ChevronUp className="h-5 w-5" />
-          ) : (
-            <ChevronDown className="h-5 w-5" />
-          )}
-        </button>
-        {showPriority && (
-          <>
-            <SidebarLink
-              icon={Layers3}
-              label="Trip"
-              href="/priority/urgent"
-            />
-            <SidebarLink
-              icon={Layers3}
-              label="Event"
-              href="/priority/high"
-            />
-            <SidebarLink
-              icon={Layers3}
-              label="Birthday"
-              href="/priority/medium"
-            />
-            <SidebarLink
-              icon={Layers3}
-              label="Wedding"
-              href="/priority/backlog"
-            />
-          </>
+          ) : null
         )}
       </div>
-      <div className="z-10 mt-32 flex w-full flex-col items-center gap-4 bg-white px-8 py-4 dark:bg-black md:hidden">
-        <div className="flex w-full items-center">
-          <div className="align-center flex h-9 w-9 justify-center">
-            <h1>Image</h1>
-          </div>
-          <span className="mx-3 text-gray-800 dark:text-white">
-            <h1>Username</h1>
-          </span>
-          <button
-            className="self-start rounded bg-blue-400 px-4 py-2 text-xs font-bold text-white hover:bg-blue-500 md:block"
-          >
-            Sign out
-          </button>
-        </div>
+      )}
+      {/* TEMPLATES LINKS */}
+      <button
+        onClick={() => setShowTemplate((prev) => !prev)}
+        className="flex w-full items-center justify-between px-8 py-3 text-gray-500"
+      >
+        <span className="">Templates</span>
+        {showTemplate ? (
+          <ChevronUp className="h-5 w-5" />
+        ) : (
+          <ChevronDown className="h-5 w-5" />
+        )}
+      </button>
+      {showTemplate && userTemplates.length > 0 && (
+        <div>
+        {userTemplates.map((template) => (
+          <SidebarLink
+            key={template.id}
+            icon={Layers3}
+            label={template.title}
+            href={`/template/${template.id}`}
+          />
+        ))}
+      </div>
+      )}
+    </div>
+    <div className="z-10 mt-32 flex w-full flex-col items-center gap-4 bg-white px-8 py-4 dark:bg-black md:hidden">
+      <div className="flex w-full items-center">
+        <button
+          className="self-start rounded bg-blue-400 px-4 py-2 text-xs font-bold text-white hover:bg-blue-500 md:block"
+        >
+          Sign out
+        </button>
       </div>
     </div>
-  );
+  </div>
+);
 };
 
 interface SidebarLinkProps {

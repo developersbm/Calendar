@@ -1,151 +1,157 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-
-export interface Project {
-  id: number;
-  name: string;
-  description?: string;
-  startDate?: string;
-  endDate?: string;
-}
-
-export enum Priority {
-  Urgent = "Urgent",
-  High = "High",
-  Medium = "Medium",
-  Low = "Low",
-  Backlog = "Backlog",
-}
-
-export enum Status {
-  ToDo = "To Do",
-  WorkInProgress = "Work In Progress",
-  UnderReview = "Under Review",
-  Completed = "Completed",
-}
-
-export interface User {
-  userId?: number;
-  username: string;
-  email: string;
-  profilePictureUrl?: string;
-  cognitoId?: string;
-  teamId?: number;
-}
-
-export interface Attachment {
-  id: number;
-  fileURL: string;
-  fileName: string;
-  taskId: number;
-  uploadedById: number;
-}
-
-export interface Task {
-  id: number;
-  title: string;
-  description?: string;
-  status?: Status;
-  priority?: Priority;
-  tags?: string;
-  startDate?: string;
-  dueDate?: string;
-  points?: number;
-  projectId: number;
-  authorUserId?: number;
-  assignedUserId?: number;
-
-  author?: User;
-  assignee?: User;
-  comments?: Comment[];
-  attachments?: Attachment[];
-}
-
-export interface SearchResults {
-  tasks?: Task[];
-  projects?: Project[];
-  users?: User[];
-}
-
-export interface Team {
-  teamId: number;
-  teamName: string;
-  productOwnerUserId?: number;
-  projectManagerUserId?: number;
-}
+import {
+  Membership,
+  User,
+  Group,
+  GroupMember,
+  Calendar,
+  Event,
+  EventParticipant,
+  Template,
+  SavingPlan,
+  Notification,
+  AuditLog,
+} from "./interface";
 
 export const api = createApi({
   baseQuery: fetchBaseQuery({
-    baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL, // Fixed the comma
+    baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL,
   }),
   reducerPath: "api",
-  tagTypes: ["Projects", "Tasks", "Users", "Teams"],
+  tagTypes: [
+    "Memberships",
+    "Users",
+    "Groups",
+    "Calendars",
+    "Events",
+    "Notifications",
+    "Templates",
+    "SavingPlans",
+    "GroupMembers",
+  ],
   endpoints: (build) => ({
-    getProjects: build.query<Project[], void>({
-      query: () => "projects",
-      providesTags: ["Projects"], // "Projects" tag type
-    }),
-    createProject: build.mutation<Project, Partial<Project>>({
-      query: (project) => ({
-        url: "projects",
-        method: "POST",
-        body: project,
-      }),
-      invalidatesTags: ["Projects"], // Invalidates "Projects" tag type
-    }),
-    getTasks: build.query<Task[], { projectId: number }>({
-      query: ({ projectId }) => `tasks?projectId=${projectId}`,
-      providesTags: (result) =>
-        result
-          ? result.map(({ id }) => ({ type: "Tasks", id })) // Corrected tags reference
-          : [{ type: "Tasks" }], // Fallback in case no result
-    }),
-    getTasksByUser: build.query<Task[], number>({
-      query: (userId) => `tasks/user/${userId}`,
-      providesTags: (result, error, userId) =>
-        result
-          ? result.map(({ id }) => ({ type: "Tasks", id })) // Corrected tags reference
-          : [{ type: "Tasks", id: userId }], // Fallback tag when no result
-    }),
-    createTask: build.mutation<Task, Partial<Task>>({
-      query: (task) => ({
-        url: "tasks",
-        method: "POST",
-        body: task,
-      }),
-      invalidatesTags: ["Tasks"], // Invalidates "Tasks" tag type
-    }),
-    updateTaskStatus: build.mutation<Task, { taskId: number; status: string }>({
-      query: ({ taskId, status }) => ({
-        url: `tasks/${taskId}/status`,
-        method: "PATCH",
-        body: { status },
-      }),
-      invalidatesTags: (result, error, { taskId }) => [
-        { type: "Tasks", id: taskId }, // Invalidates the specific task
-      ],
-    }),
+    // Memberships update (Free or Premium)
+
+    // Users
     getUsers: build.query<User[], void>({
-      query: () => "users",
-      providesTags: ["Users"], // "Users" tag type
+      query: () => "user",
+      providesTags: ["Users"],
     }),
-    getTeams: build.query<Team[], void>({
-      query: () => "teams",
-      providesTags: ["Teams"], // "Teams" tag type
+    createUser: build.mutation<User, Partial<User>>({
+      query: (user) => ({
+        url: "users",
+        method: "POST",
+        body: user,
+      }),
+      invalidatesTags: ["Users"],
     }),
-    search: build.query<SearchResults, string>({
-      query: (query) => `search?query=${query}`,
+
+    // Groups
+    getGroups: build.query<Group[], void>({
+      query: () => "group",
+      providesTags: ["Groups"],
+    }),
+    createGroup: build.mutation<Group, Partial<Group>>({
+      query: (group) => ({
+        url: "group",
+        method: "POST",
+        body: group,
+      }),
+      invalidatesTags: ["Groups"],
+    }),
+
+    // Get all group members
+    getGroupMembers : build.query<GroupMember[], void>({
+      query: () => "groupMember",
+      providesTags: ["GroupMembers"]
+    }),
+
+    // Calendars (Calendar is creates as soon as user registers)
+    getCalendars: build.query<Calendar[], void>({
+      query: () => "calendars",
+      providesTags: ["Calendars"],
+    }),
+    createCalendar: build.mutation<Calendar, Partial<Calendar>>({
+      query: (calendar) => ({
+        url: "calendars",
+        method: "POST",
+        body: calendar,
+      }),
+      invalidatesTags: ["Calendars"],
+    }),
+
+    // Events (CRUD)
+    getEvents: build.query<Event[], void>({
+      query: () => "events",
+      providesTags: ["Events"],
+    }),
+    createEvent: build.mutation<Event, Partial<Event>>({
+      query: (event) => ({
+        url: "events",
+        method: "POST",
+        body: event,
+      }),
+      invalidatesTags: ["Events"],
+    }),
+
+    // Notifications
+    getNotifications: build.query<Notification[], void>({
+      query: () => "notifications",
+      providesTags: ["Notifications"],
+    }),
+    createNotification: build.mutation<Notification, Partial<Notification>>({
+      query: (notification) => ({
+        url: "notifications",
+        method: "POST",
+        body: notification,
+      }),
+      invalidatesTags: ["Notifications"],
+    }),
+
+    // Templates (CRUD)
+    getTemplates: build.query<Template[], void>({
+      query: () => "template",
+      providesTags: ["Templates"],
+    }),
+    createTemplate: build.mutation<Template, Partial<Template>>({
+      query: (template) => ({
+        url: "templates",
+        method: "POST",
+        body: template,
+      }),
+      invalidatesTags: ["Templates"],
+    }),
+
+    // Saving Plans (CRUD)
+    getSavingPlans: build.query<SavingPlan[], void>({
+      query: () => "saving-plans",
+      providesTags: ["SavingPlans"],
+    }),
+    createSavingPlan: build.mutation<SavingPlan, Partial<SavingPlan>>({
+      query: (savingPlan) => ({
+        url: "saving-plans",
+        method: "POST",
+        body: savingPlan,
+      }),
+      invalidatesTags: ["SavingPlans"],
     }),
   }),
 });
 
 export const {
-  useGetProjectsQuery,
-  useCreateProjectMutation,
-  useGetTasksQuery,
-  useCreateTaskMutation,
-  useUpdateTaskStatusMutation,
-  useSearchQuery,
   useGetUsersQuery,
-  useGetTeamsQuery,
-  useGetTasksByUserQuery,
+  useCreateUserMutation,
+  useGetGroupsQuery,
+  useCreateGroupMutation,
+  useGetGroupMembersQuery,
+  useGetCalendarsQuery,
+  useCreateCalendarMutation,
+  useGetEventsQuery,
+  useCreateEventMutation,
+  useGetNotificationsQuery,
+  useCreateNotificationMutation,
+  useGetTemplatesQuery,
+  useCreateTemplateMutation,
+  useGetSavingPlansQuery,
+  useCreateSavingPlanMutation,
 } = api;
