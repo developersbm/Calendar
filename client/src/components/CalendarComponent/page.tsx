@@ -1,61 +1,97 @@
 "use client";
 import { useCallback, useState } from "react";
-import FullCalendar, {
-  DateSelectArg,
-  EventApi,
-  EventClickArg
-} from "@fullcalendar/react";
+import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
-import allLocales from "@fullcalendar/core/locales-all";
+import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
+import allLocales from "@fullcalendar/core/locales-all";
 import { useAppSelector } from "@/app/redux";
+import { useCreateEventMutation } from "@/state/api";
+import Modal from "@/components/Modal/page";
+import { DateSelectArg } from "@fullcalendar/core/index.js";
 
 const CalendarComponent = () => {
-  const [currentEvents, setCurrentEvents] = useState<EventApi[]>([]);
+  const [currentEvents, setCurrentEvents] = useState([]);
+  const [isModalOpen, setModalOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
   const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
+  const [createEvent] = useCreateEventMutation();
 
-  const handleEvents = useCallback(
-    (events: EventApi[]) => setCurrentEvents(events),
-    []
-  );
-
-  const handleDateSelect = useCallback((selectInfo: DateSelectArg) => {
-    let title = prompt("Grab")?.trim();
-    let calendarApi = selectInfo.view.calendar;
-    calendarApi.unselect();
-    if (title) {
-      calendarApi.addEvent({
-        title,
-        start: selectInfo.startStr,
-        end: selectInfo.endStr,
-        allDay: selectInfo.allDay
-      });
-    }
+  const handleEvents = useCallback((events) => {
+    setCurrentEvents(events);
   }, []);
 
-  const handleEventClick = useCallback((clickInfo: EventClickArg) => {
+  const handleDateSelect = useCallback((selectInfo: DateSelectArg) => {
+    setSelectedDate(selectInfo);
+    setModalOpen(true);
+  }, []);  
+
+  const handleModalSubmit = async ({ title, description }) => {
+    if (selectedDate) {
+      const calendarApi = selectedDate.view.calendar;
+
+      const eventToSave = {
+        title,
+        description,
+        startTime: selectedDate.startStr,
+        endTime: selectedDate.endStr,
+        calendarId: 1,
+      };
+
+      try {
+        const newEvent = await createEvent(eventToSave).unwrap();
+        calendarApi.addEvent({
+          id: newEvent.id.toString(),
+          title: newEvent.title,
+          start: newEvent.startTime,
+          end: newEvent.endTime,
+          allDay: selectedDate.allDay,
+        });
+      } catch (error) {
+        console.error("Error creating event:", error);
+        alert("Failed to save the event. Please try again.");
+      }
+    }
+    setModalOpen(false);
+  };
+
+  const handleEventClick = useCallback((clickInfo) => {
     if (window.confirm(`Delete ${clickInfo.event.title}`)) {
       clickInfo.event.remove();
     }
   }, []);
 
-  // Conditionally apply dark mode styles based on the redux state
-  const calendarClassNames = `w-[80vh] h-[50vh] ${
+  const calendarClassNames = `w-[200vh] h-[80vh] ${
     isDarkMode ? "dark" : "grey"
   }`;
 
   return (
     <div className={calendarClassNames}>
       <FullCalendar
-        plugins={[dayGridPlugin, interactionPlugin]}
+        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
         initialView="dayGridMonth"
         selectable={true}
         editable={true}
         locales={allLocales}
         locale="en"
+        headerToolbar={{
+          left: "prev,next",
+          center: "title",
+          right: "today,dayGridMonth,timeGridWeek",
+        }}
         eventsSet={handleEvents}
         select={handleDateSelect}
         eventClick={handleEventClick}
+      />
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setModalOpen(false)}
+        onSubmit={handleModalSubmit}
+        selectedDateRange={
+          selectedDate
+            ? { start: selectedDate.startStr, end: selectedDate.endStr }
+            : null
+        }
       />
     </div>
   );
