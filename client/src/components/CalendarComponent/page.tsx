@@ -45,7 +45,9 @@ const CalendarComponent = () => {
           title: newEvent.title,
           start: newEvent.startTime,
           end: newEvent.endTime,
-          allDay: selectedDate.allDay,
+          calendarId: 1,
+          createdAt: "2024-11-21T08:30:00Z",
+          updatedAt: "2024-11-21T08:30:00Z"
         });
       } catch (error) {
         console.error("Error creating event:", error);

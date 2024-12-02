@@ -24,7 +24,6 @@ export const getUser = async (req: Request, res: Response): Promise<void> => {
           cognitoId: cognitoId,
         },
       });
-  
       res.json(user);
     } catch (error: any) {
       res

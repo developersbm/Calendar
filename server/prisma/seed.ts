@@ -1,74 +1,71 @@
-import { PrismaClient } from "@prisma/client";
-import fs from "fs";
-import path from "path";
+import { PrismaClient } from '@prisma/client';
+import fs from 'fs';
 
 const prisma = new PrismaClient();
 
-async function deleteAllData(orderedFileNames: string[]) {
-  const modelNames = orderedFileNames.map((fileName) => {
-    const modelName = path.basename(fileName, path.extname(fileName));
-    return modelName.charAt(0).toUpperCase() + modelName.slice(1);
-  });
+async function clearData() {
+  // Delete child records first, then parent records
+  await prisma.eventParticipant.deleteMany();
+  await prisma.groupMember.deleteMany();
+  await prisma.notification.deleteMany();
+  await prisma.auditLog.deleteMany();
+  await prisma.savingPlan.deleteMany();
+  await prisma.event.deleteMany();
 
-  for (const modelName of modelNames) {
-    const model: any = prisma[modelName as keyof typeof prisma];
+  await prisma.membership.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.group.deleteMany();
+  await prisma.template.deleteMany();
+  await prisma.calendar.deleteMany();
+
+  console.log('Data cleared successfully.');
+}
+
+async function seedData() {
+  const seedFiles = [
+    { model: prisma.calendar, file: 'calendar.json' },
+    { model: prisma.template, file: 'template.json' },
+    { model: prisma.group, file: 'group.json' },
+    { model: prisma.membership, file: 'membership.json' },
+    { model: prisma.user, file: 'user.json' },
+    { model: prisma.event, file: 'event.json' },
+    { model: prisma.savingPlan, file: 'savingPlan.json' },
+    { model: prisma.groupMember, file: 'groupMember.json' },
+    { model: prisma.eventParticipant, file: 'eventParticipant.json' },
+    { model: prisma.notification, file: 'notification.json' },
+    { model: prisma.auditLog, file: 'auditLog.json' },
+  ];
+
+  for (const { model, file } of seedFiles) {
     try {
-      await model.deleteMany({});
-      console.log(`Cleared data from ${modelName}`);
+      const jsonData = JSON.parse(fs.readFileSync(`prisma/seedData/${file}`, 'utf8'));
+      for (const data of jsonData) {
+        try {
+          // Explicitly cast the model to the correct Prisma model type
+          await (model as any).create({ data });
+        } catch (error) {
+          console.error(`Error seeding data for ${file}:`, error);
+        }
+      }
+      console.log(`Seeded ${file} successfully.`);
     } catch (error) {
-      console.error(`Error clearing data from ${modelName}:`, error);
+      console.error(`Error reading ${file}:`, error);
     }
   }
 }
 
 async function main() {
-  const dataDirectory = path.join(__dirname, "seedData");
-
-  const orderedFileNames = [
-    "calendar.json",        // 1. Seed Calendar first
-    "membership.json",      // 2. Seed Membership
-    "user.json",            // 3. Seed User (after Calendar and Membership)
-    "group.json",           // 4. Seed Group (after User)
-    "template.json",        // 5. Seed Template
-    "event.json",           // 6. Seed Event (after Calendar and User)
-    "eventParticipant.json",// 7. Seed EventParticipant (after Event and User)
-    "groupMember.json",     // 8. Seed GroupMember (after Group and User)
-    "notification.json",    // 9. Seed Notification (after User)
-    "auditLog.json",        // 10. Seed AuditLog (if applicable)
-    "savingPlan.json",      // 11. Seed SavingPlan (after User or Membership)
-  ];
-  
-
-  await deleteAllData(orderedFileNames);
-
-  for (const fileName of orderedFileNames) {
-    const filePath = path.join(dataDirectory, fileName);
-
-    if (!fs.existsSync(filePath)) {
-      console.error(`File not found: ${filePath}`);
-      continue;
-    }
-
-    const jsonData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-    const modelName = path.basename(fileName, path.extname(fileName));
-    const model: any = prisma[modelName as keyof typeof prisma];
-
-    if (!model) {
-      console.error(`Model not found for file: ${fileName}`);
-      continue;
-    }
-
-    try {
-      for (const data of jsonData) {
-        await model.create({ data });
-      }
-      console.log(`Seeded ${modelName} with data from ${fileName}`);
-    } catch (error) {
-      console.error(`Error seeding data for ${modelName}:`, error);
-    }
+  try {
+    console.log('Clearing old data...');
+    await clearData();
+    console.log('Seeding new data...');
+    await seedData();
+    console.log('Seeding completed successfully.');
+  } catch (error) {
+    console.error('An error occurred during the seeding process:', error);
+  } finally {
+    await prisma.$disconnect();
   }
 }
 
-main()
-  .catch((e) => console.error(e))
-  .finally(async () => await prisma.$disconnect());
+main();
