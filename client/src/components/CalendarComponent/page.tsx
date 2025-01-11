@@ -13,9 +13,9 @@ import { DateSelectArg } from "@fullcalendar/core/index.js";
 const CalendarComponent = () => {
   const [currentEvents, setCurrentEvents] = useState([]);
   const [isModalOpen, setModalOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(null);
   const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
   const [createEvent] = useCreateEventMutation();
+  const [selectedDate, setSelectedDate] = useState<DateSelectArg | null>(null);
 
   const handleEvents = useCallback((events) => {
     setCurrentEvents(events);
@@ -24,7 +24,7 @@ const CalendarComponent = () => {
   const handleDateSelect = useCallback((selectInfo: DateSelectArg) => {
     setSelectedDate(selectInfo);
     setModalOpen(true);
-  }, []);  
+  }, []);
 
   const handleModalSubmit = async ({ title, description }) => {
     if (selectedDate) {
@@ -45,9 +45,6 @@ const CalendarComponent = () => {
           title: newEvent.title,
           start: newEvent.startTime,
           end: newEvent.endTime,
-          calendarId: 1,
-          createdAt: "2024-11-21T08:30:00Z",
-          updatedAt: "2024-11-21T08:30:00Z"
         });
       } catch (error) {
         console.error("Error creating event:", error);
@@ -64,7 +61,7 @@ const CalendarComponent = () => {
   }, []);
 
   const calendarClassNames = `w-[200vh] h-[80vh] ${
-    isDarkMode ? "dark" : "grey"
+    isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
   }`;
 
   return (
@@ -79,11 +76,15 @@ const CalendarComponent = () => {
         headerToolbar={{
           left: "prev,next",
           center: "title",
-          right: "today,dayGridMonth,timeGridWeek",
+          right: "today,dayGridMonth",
         }}
         eventsSet={handleEvents}
         select={handleDateSelect}
         eventClick={handleEventClick}
+        
+        // DarkMode
+        eventColor={isDarkMode ? "#4B5563" : "#2563EB"}
+        themeSystem="bootstrap5"
       />
       <Modal
         isOpen={isModalOpen}
@@ -91,7 +92,10 @@ const CalendarComponent = () => {
         onSubmit={handleModalSubmit}
         selectedDateRange={
           selectedDate
-            ? { start: selectedDate.startStr, end: selectedDate.endStr }
+            ? {
+                start: selectedDate.startStr,
+                end: selectedDate.endStr,
+              }
             : null
         }
       />

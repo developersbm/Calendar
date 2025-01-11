@@ -39,29 +39,22 @@ export const getEvent = async (req: Request, res: Response): Promise<void> => {
 
 // Create an event
 export const postEvent = async (req: Request, res: Response): Promise<void> => {
-    const {
-      title,
-      description,
-      startTime,
-      endTime,
-      recurrence,
-      endRecurrence,
-      calendarId,
-    } = req.body;
-    try {
-      const newEvent = await prisma.event.create({
-        data: {
-          title,
-          description,
-          startTime: new Date(startTime),
-          endTime: new Date(endTime),
-          recurrence,
-          endRecurrence: endRecurrence ? new Date(endRecurrence) : null,
-          calendarId,
-        },
-      });
-      res.json({ message: 'Event created successfully', newEvent });
-    } catch (error: any) {
-      res.status(500).json({ message: `Error creating event: ${error.message}` });
-    }
-};  
+  const { title, description, startTime, endTime, recurrence, endRecurrence, calendarId } = req.body;
+
+  try {
+    const newEvent = await prisma.event.create({
+      data: {
+        title,
+        description,
+        startTime: new Date(startTime),
+        endTime: new Date(endTime),
+        recurrence: recurrence || null,
+        endRecurrence: endRecurrence ? new Date(endRecurrence) : null,
+        calendarId,
+      },
+    });
+    res.status(201).json({ message: "Event created successfully", newEvent });
+  } catch (error: any) {
+    res.status(500).json({ message: `Error creating event: ${error.message}` });
+  }
+};

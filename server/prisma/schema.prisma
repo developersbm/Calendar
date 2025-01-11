@@ -11,7 +11,7 @@ datasource db {
 model Membership {
   id             Int       @id @default(autoincrement())
   type           String    // Free or Premium
-  // maxFriends     Int       // Optionally remove if "friends" feature is no longer relevant
+  // maxFriends     Int    // Optionally remove if "friends" feature is no longer relevant
   // maxTemplates   Int
   // maxGroups      Int
   // maxSavingPlans Int

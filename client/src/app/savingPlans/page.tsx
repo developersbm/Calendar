@@ -1,10 +1,159 @@
 "use client";
-import Image from "next/image";
 
-export default function savingPlans() {
+import React, { useState, useEffect } from "react";
+import {
+  Chart as ChartJS,
+  LineElement,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  Filler,
+  Tooltip,
+} from "chart.js";
+import { Line } from "react-chartjs-2";
+import { Wallet, Download, Upload } from "lucide-react";
+
+// Register Chart.js components
+ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Filler, Tooltip);
+
+export default function SavingPlans() {
+  const [goal, setGoal] = useState(1000); // Default saving goal
+  const [amount, setAmount] = useState(""); // Amount to save
+  const [transactions, setTransactions] = useState([]);
+  const [chartData, setChartData] = useState({
+    labels: [],
+    datasets: [
+      {
+        label: "Savings Progress",
+        data: [],
+        fill: true,
+        backgroundColor: "rgba(59, 130, 246, 0.2)", // Light blue
+        borderColor: "rgba(59, 130, 246, 1)", // Dark blue
+      },
+    ],
+  });
+
+  // Handle adding a transaction
+  const handleAddTransaction = (type) => {
+    if (!amount) return;
+    const newTransaction = {
+      type,
+      amount: parseFloat(amount),
+      date: new Date().toISOString().split("T")[0], // Current date
+    };
+    setTransactions([newTransaction, ...transactions]);
+    setAmount("");
+  };
+
+  // Update chart data dynamically based on transactions
+  useEffect(() => {
+    const cumulativeSavings = [];
+    let total = 0;
+    const labels = transactions.map((t) => t.date).reverse();
+
+    transactions.reverse().forEach((transaction) => {
+      total += transaction.type === "Deposit" ? transaction.amount : -transaction.amount;
+      cumulativeSavings.push(total);
+    });
+
+    setChartData({
+      labels: labels.length ? labels : ["Start"],
+      datasets: [
+        {
+          label: "Savings Progress",
+          data: cumulativeSavings.length ? cumulativeSavings : [0],
+          fill: true,
+          backgroundColor: "rgba(59, 130, 246, 0.2)",
+          borderColor: "rgba(59, 130, 246, 1)",
+        },
+      ],
+    });
+  }, [transactions]);
+
   return (
-    <div className="">
-        <h1>savingPlans</h1>
+    <div className="p-6 bg-gray-100 dark:bg-black min-h-screen flex flex-col space-y-6">
+      <h1 className="text-2xl font-bold text-center text-gray-800 dark:text-white">
+        Saving Plans
+      </h1>
+
+      {/* Savings Graph */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-md">
+        <h2 className="text-lg font-bold mb-4 text-gray-800 dark:text-white">
+          Savings Progress
+        </h2>
+        <div className="h-48">
+          <Line data={chartData} options={{ responsive: true, maintainAspectRatio: false }} />
+        </div>
+      </div>
+
+      {/* Saving Goal */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-md">
+        <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4">
+          Set Your Saving Goal
+        </h2>
+        <div className="flex items-center space-x-4">
+          <label className="text-gray-800 dark:text-white font-medium">
+            Goal ($):
+          </label>
+          <input
+            type="number"
+            value={goal}
+            onChange={(e) => setGoal(e.target.value)}
+            className="p-2 border rounded w-24 dark:bg-gray-700 dark:text-white"
+          />
+        </div>
+      </div>
+
+      {/* Add Savings */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-md">
+        <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4">
+          Add Savings
+        </h2>
+        <div className="flex items-center space-x-4">
+          <input
+            type="number"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="Enter amount ($)"
+            className="p-2 border rounded w-40 dark:bg-gray-700 dark:text-white"
+          />
+          <button
+            onClick={() => handleAddTransaction("Deposit")}
+            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+          >
+            Deposit
+          </button>
+          <button
+            onClick={() => handleAddTransaction("Withdraw")}
+            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+          >
+            Withdraw
+          </button>
+        </div>
+      </div>
+
+      {/* Transactions */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-md">
+        <details>
+          <summary className="text-lg font-bold text-gray-800 dark:text-white">
+            Recent Transactions
+          </summary>
+          <ul className="mt-4">
+            {transactions.map((transaction, index) => (
+              <li
+                key={index}
+                className={`flex justify-between py-2 text-gray-800 dark:text-white ${
+                  transaction.type === "Deposit" ? "text-green-500" : "text-red-500"
+                }`}
+              >
+                <span>{transaction.type}</span>
+                <span>${transaction.amount.toFixed(2)}</span>
+                <span>{transaction.date}</span>
+              </li>
+            ))}
+          </ul>
+        </details>
+      </div>
     </div>
   );
 }
