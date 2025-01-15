@@ -42,8 +42,6 @@ export default function SavingPlans() {
     return transaction.type === "Deposit" ? acc + transaction.amount : acc - transaction.amount;
   }, 0);
 
-  const goalReached = totalSaved >= goal;
-
   // Handle adding a transaction
   const handleAddTransaction = (type: "Deposit" | "Withdraw") => {
     if (!amount) return;
@@ -113,13 +111,6 @@ export default function SavingPlans() {
             className="p-2 border rounded w-24 dark:bg-gray-700 dark:text-white"
           />
         </div>
-        {/* <div className="mt-2 text-gray-800 dark:text-white">
-          {goalReached ? (
-            <p className="text-green-500 font-semibold">Congratulations! You've reached your savings goal.</p>
-          ) : (
-            <p className="text-yellow-500">You&apos;re ${goal - totalSaved} away from your goal.</p>
-          )}
-        </div> */}
       </div>
 
       {/* Add Savings */}
