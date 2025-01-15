@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { Calendar, Layers3, Users } from "lucide-react";
 import Link from "next/link";
 

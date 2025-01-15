@@ -7,7 +7,6 @@ import {
   Home,
   Layers3,
   LucideIcon,
-  User,
   Users,
   X,
   CirclePlus,

@@ -84,7 +84,7 @@ export interface Membership {
     title: string;
     description?: string;
     ownerId: number;
-    elements: Record<string, any>;
+    elements: Record<string, string>;
     isActive: boolean;
     createdAt: string;
     updatedAt: string;
@@ -116,7 +116,7 @@ export interface Membership {
     actionType: string; // Create, Update, Delete
     entityType: string; // User, Group, Event, etc.
     userId: number;
-    details?: Record<string, any>;
+    details?: Record<string, string>;
     timestamp: string;
     user?: User;
   }  

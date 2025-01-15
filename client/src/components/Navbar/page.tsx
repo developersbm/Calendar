@@ -15,7 +15,7 @@ const Navbar = () => {
     (state) => state.global.isSidebarCollapsed,
   );
   const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
-  const { data: users, isLoading: loadingUsers } = useGetUsersQuery();
+  const { data: users } = useGetUsersQuery();
 
   const user = users?.find((user) => user.id === 1);
 

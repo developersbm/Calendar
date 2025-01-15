@@ -1,16 +1,13 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import {
-  Membership,
   User,
   Group,
   GroupMember,
   Calendar,
   Event,
-  EventParticipant,
   Template,
   SavingPlan,
   Notification,
-  AuditLog,
 } from "./interface";
 
 export const api = createApi({

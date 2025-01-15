@@ -12,7 +12,7 @@ const GroupsPage = () => {
 
   const userId = 1; // Assuming user ID is 1 for now
 
-  const user = users?.find((user) => user.id === userId);
+  // const user = users?.find((user) => user.id === userId);
 
   const userGroups =
     groupMembers

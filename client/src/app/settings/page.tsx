@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/app/redux";
 
 const SettingsPage = () => {
-  const [user, setUser] = useState({
+  const [user] = useState({
     id: 1,
     name: "John Doe",
     email: "john.doe@example.com",
@@ -13,7 +13,7 @@ const SettingsPage = () => {
     updatedAt: "2024-01-09",
   });
 
-  const dispatch = useAppDispatch();
+  // const dispatch = useAppDispatch();
   const isSidebarCollapsed = useAppSelector((state) => state.global.isSidebarCollapsed);
 
   return (

@@ -11,21 +11,26 @@ import {
   Tooltip,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
-import { Wallet, Download, Upload } from "lucide-react";
 
 // Register Chart.js components
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Filler, Tooltip);
 
+interface Transaction {
+  type: "Deposit" | "Withdraw";
+  amount: number;
+  date: string;
+}
+
 export default function SavingPlans() {
   const [goal, setGoal] = useState(1000); // Default saving goal
   const [amount, setAmount] = useState(""); // Amount to save
-  const [transactions, setTransactions] = useState([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [chartData, setChartData] = useState({
-    labels: [],
+    labels: [] as string[],
     datasets: [
       {
         label: "Savings Progress",
-        data: [],
+        data: [] as number[],
         fill: true,
         backgroundColor: "rgba(59, 130, 246, 0.2)", // Light blue
         borderColor: "rgba(59, 130, 246, 1)", // Dark blue
@@ -34,9 +39,9 @@ export default function SavingPlans() {
   });
 
   // Handle adding a transaction
-  const handleAddTransaction = (type) => {
+  const handleAddTransaction = (type: "Deposit" | "Withdraw") => {
     if (!amount) return;
-    const newTransaction = {
+    const newTransaction: Transaction = {
       type,
       amount: parseFloat(amount),
       date: new Date().toISOString().split("T")[0], // Current date
@@ -47,7 +52,7 @@ export default function SavingPlans() {
 
   // Update chart data dynamically based on transactions
   useEffect(() => {
-    const cumulativeSavings = [];
+    const cumulativeSavings: number[] = [];
     let total = 0;
     const labels = transactions.map((t) => t.date).reverse();
 
@@ -98,7 +103,7 @@ export default function SavingPlans() {
           <input
             type="number"
             value={goal}
-            onChange={(e) => setGoal(e.target.value)}
+            onChange={(e) => setGoal(Number(e.target.value))}
             className="p-2 border rounded w-24 dark:bg-gray-700 dark:text-white"
           />
         </div>
