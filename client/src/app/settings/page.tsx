@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useAppDispatch, useAppSelector } from "@/app/redux";
+import { useAppSelector } from "@/app/redux";
 
 const SettingsPage = () => {
   const [user] = useState({
