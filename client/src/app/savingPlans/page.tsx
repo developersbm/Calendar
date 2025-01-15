@@ -38,9 +38,9 @@ export default function SavingPlans() {
     ],
   });
 
-  const totalSaved = transactions.reduce((acc, transaction) => {
-    return transaction.type === "Deposit" ? acc + transaction.amount : acc - transaction.amount;
-  }, 0);
+  // const totalSaved = transactions.reduce((acc, transaction) => {
+  //   return transaction.type === "Deposit" ? acc + transaction.amount : acc - transaction.amount;
+  // }, 0);
 
   // Handle adding a transaction
   const handleAddTransaction = (type: "Deposit" | "Withdraw") => {
