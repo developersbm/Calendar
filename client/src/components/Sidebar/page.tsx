@@ -33,12 +33,11 @@ const Sidebar = () => {
   const dispatch = useAppDispatch();
   const isSidebarCollapsed = useAppSelector((state) => state.global.isSidebarCollapsed);
 
-const sidebarClassNames = `fixed top-0 left-0 flex flex-col h-full z-40 transition-transform duration-300 
+  const sidebarClassNames = `fixed top-0 left-0 flex flex-col h-full z-40 transition-transform duration-300 
     shadow-xl dark:bg-black bg-white overflow-y-auto
     ${isSidebarCollapsed ? "-translate-x-full" : "translate-x-0"}
     w-64
   `;
-
 
   const user = users?.find((user) => user.id === 1);
 
@@ -101,7 +100,7 @@ const sidebarClassNames = `fixed top-0 left-0 flex flex-col h-full z-40 transiti
               <SidebarLink
                 key={group?.id}
                 icon={Users}
-                label={group?.title}
+                label={group?.title || "Unnamed Group"} // Fallback to a default string
                 href={`/group/${group?.id}`}
               />
             ))}
@@ -119,7 +118,7 @@ const sidebarClassNames = `fixed top-0 left-0 flex flex-col h-full z-40 transiti
           onClick={() => setShowTemplate((prev) => !prev)}
           className="flex w-full items-center justify-between px-8 py-3 text-gray-500"
         >
-          <span className="">Templates</span>
+          <span>Templates</span>
           {showTemplate ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
         </button>
         {showTemplate && (
@@ -128,7 +127,7 @@ const sidebarClassNames = `fixed top-0 left-0 flex flex-col h-full z-40 transiti
               <SidebarLink
                 key={template.id}
                 icon={Layers3}
-                label={template.title}
+                label={template.title || "Unnamed Template"} // Fallback to a default string
                 href={`/template/${template.id}`}
               />
             ))}
