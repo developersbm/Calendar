@@ -100,7 +100,8 @@ const Sidebar = () => {
                 key={group?.id}
                 icon={Users}
                 label={group?.title || "Unnamed Group"} // Fallback to a default string
-                href={`/group/${group?.id}`}
+                href={`/groups`}
+                // href={`/group/${group?.id}`}
               />
             ))}
           </div>

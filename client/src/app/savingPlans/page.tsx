@@ -38,6 +38,12 @@ export default function SavingPlans() {
     ],
   });
 
+  const totalSaved = transactions.reduce((acc, transaction) => {
+    return transaction.type === "Deposit" ? acc + transaction.amount : acc - transaction.amount;
+  }, 0);
+
+  const goalReached = totalSaved >= goal;
+
   // Handle adding a transaction
   const handleAddTransaction = (type: "Deposit" | "Withdraw") => {
     if (!amount) return;
@@ -86,7 +92,7 @@ export default function SavingPlans() {
         <h2 className="text-lg font-bold mb-4 text-gray-800 dark:text-white">
           Savings Progress
         </h2>
-        <div className="h-48">
+        <div className="h-48 w-full">
           <Line data={chartData} options={{ responsive: true, maintainAspectRatio: false }} />
         </div>
       </div>
@@ -107,6 +113,13 @@ export default function SavingPlans() {
             className="p-2 border rounded w-24 dark:bg-gray-700 dark:text-white"
           />
         </div>
+        <div className="mt-2 text-gray-800 dark:text-white">
+          {goalReached ? (
+            <p className="text-green-500 font-semibold">Congratulations! You've reached your savings goal.</p>
+          ) : (
+            <p className="text-yellow-500">You're ${goal - totalSaved} away from your goal.</p>
+          )}
+        </div>
       </div>
 
       {/* Add Savings */}
@@ -114,23 +127,23 @@ export default function SavingPlans() {
         <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4">
           Add Savings
         </h2>
-        <div className="flex items-center space-x-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-4 sm:space-y-0">
           <input
             type="number"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="Enter amount ($)"
-            className="p-2 border rounded w-40 dark:bg-gray-700 dark:text-white"
+            className="p-2 border rounded w-full sm:w-40 dark:bg-gray-700 dark:text-white"
           />
           <button
             onClick={() => handleAddTransaction("Deposit")}
-            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 active:scale-95 dark:bg-green-600 dark:hover:bg-green-700 transition duration-300"
           >
             Deposit
           </button>
           <button
             onClick={() => handleAddTransaction("Withdraw")}
-            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 active:scale-95 dark:bg-red-600 dark:hover:bg-red-700 transition duration-300"
           >
             Withdraw
           </button>
@@ -143,17 +156,27 @@ export default function SavingPlans() {
           <summary className="text-lg font-bold text-gray-800 dark:text-white">
             Recent Transactions
           </summary>
-          <ul className="mt-4">
+          <ul className="mt-4 space-y-2">
             {transactions.map((transaction, index) => (
               <li
                 key={index}
-                className={`flex justify-between py-2 text-gray-800 dark:text-white ${
-                  transaction.type === "Deposit" ? "text-green-500" : "text-red-500"
-                }`}
+                className="flex justify-between py-2 items-center"
               >
-                <span>{transaction.type}</span>
-                <span>${transaction.amount.toFixed(2)}</span>
-                <span>{transaction.date}</span>
+                <span
+                  className={`font-semibold ${
+                    transaction.type === "Deposit"
+                      ? "text-green-500 dark:text-green-400"
+                      : "text-red-500 dark:text-red-400"
+                  }`}
+                >
+                  {transaction.type}
+                </span>
+                <span className="text-gray-800 dark:text-white">
+                  ${transaction.amount.toFixed(2)}
+                </span>
+                <span className="text-gray-500 dark:text-gray-400">
+                  {transaction.date}
+                </span>
               </li>
             ))}
           </ul>
