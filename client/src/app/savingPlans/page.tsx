@@ -117,7 +117,7 @@ export default function SavingPlans() {
           {goalReached ? (
             <p className="text-green-500 font-semibold">Congratulations! You've reached your savings goal.</p>
           ) : (
-            <p className="text-yellow-500">You're ${goal - totalSaved} away from your goal.</p>
+            <p className="text-yellow-500">You&apos;re ${goal - totalSaved} away from your goal.</p>
           )}
         </div>
       </div>
