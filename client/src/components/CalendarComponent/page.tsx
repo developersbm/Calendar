@@ -8,25 +8,31 @@ import allLocales from "@fullcalendar/core/locales-all";
 import { useAppSelector } from "@/app/redux";
 import { useCreateEventMutation } from "@/state/api";
 import Modal from "@/components/Modal/page";
-import { DateSelectArg } from "@fullcalendar/core/index.js";
+import { DateSelectArg, EventClickArg } from "@fullcalendar/core";
 
 const CalendarComponent = () => {
-  const [currentEvents, setCurrentEvents] = useState([]);
+  // const [currentEvents, setCurrentEvents] = useState([]);
   const [isModalOpen, setModalOpen] = useState(false);
   const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
   const [createEvent] = useCreateEventMutation();
-  const [selectedDate, setSelectedDate] = useState<DateSelectArg | null>(null);
+  const [selectedDate, setSelectedDate] = useState<DateSelectArg | undefined>(undefined);
 
-  const handleEvents = useCallback((events) => {
-    setCurrentEvents(events);
-  }, []);
+  // const handleEvents = useCallback((events: any[]) => {
+  //   setCurrentEvents(events);
+  // }, []);
 
   const handleDateSelect = useCallback((selectInfo: DateSelectArg) => {
     setSelectedDate(selectInfo);
     setModalOpen(true);
   }, []);
 
-  const handleModalSubmit = async ({ title, description }) => {
+  const handleModalSubmit = async ({
+    title,
+    description,
+  }: {
+    title: string;
+    description: string;
+  }) => {
     if (selectedDate) {
       const calendarApi = selectedDate.view.calendar;
 
@@ -54,7 +60,7 @@ const CalendarComponent = () => {
     setModalOpen(false);
   };
 
-  const handleEventClick = useCallback((clickInfo) => {
+  const handleEventClick = useCallback((clickInfo: EventClickArg) => {
     if (window.confirm(`Delete ${clickInfo.event.title}`)) {
       clickInfo.event.remove();
     }
@@ -76,13 +82,11 @@ const CalendarComponent = () => {
         headerToolbar={{
           left: "prev,next",
           center: "title",
-          right: "today,dayGridMonth",
+          right: "today,dayGridMonth,dayGridWeek",
         }}
-        eventsSet={handleEvents}
+        // eventsSet={handleEvents}
         select={handleDateSelect}
         eventClick={handleEventClick}
-        
-        // DarkMode
         eventColor={isDarkMode ? "#4B5563" : "#2563EB"}
         themeSystem="bootstrap5"
       />
@@ -96,7 +100,7 @@ const CalendarComponent = () => {
                 start: selectedDate.startStr,
                 end: selectedDate.endStr,
               }
-            : null
+            : undefined
         }
       />
     </div>

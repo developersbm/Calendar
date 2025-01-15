@@ -15,22 +15,34 @@ import {
   CirclePlus,
 } from "lucide-react";
 
-const AddTemplate = () => {
-  const [templateTitle, setTemplateTitle] = useState("Click to edit event name");
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [selectedOption, setSelectedOption] = useState(null);
-  const [detailsData, setDetailsData] = useState({});
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [totalPrice, setTotalPrice] = useState(0);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+interface EventOption {
+  name: string;
+  icon: JSX.Element;
+  fields: string[];
+}
+
+interface DetailsData {
+  [key: string]: {
+    [field: string]: string | number;
+  };
+}
+
+const AddTemplate: React.FC = () => {
+  const [templateTitle, setTemplateTitle] = useState<string>("Click to edit event name");
+  const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
+  const [selectedOption, setSelectedOption] = useState<EventOption | null>(null);
+  const [detailsData, setDetailsData] = useState<DetailsData>({});
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [totalPrice, setTotalPrice] = useState<number>(0);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
 
   const handleTitleClick = () => setIsEditingTitle(true);
-  const handleTitleChange = (e) => setTemplateTitle(e.target.value);
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => setTemplateTitle(e.target.value);
   const handleTitleBlur = () => setIsEditingTitle(false);
 
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
 
-  const eventOptions = [
+  const eventOptions: EventOption[] = [
     { name: "Date", icon: <Calendar size={32} />, fields: ["Event Date"] },
     { name: "Venue", icon: <MapPin size={32} />, fields: ["Venue Name", "Location", "Price"] },
     { name: "Food", icon: <Utensils size={32} />, fields: ["Food Type", "Menu Items", "Price"] },
@@ -38,23 +50,22 @@ const AddTemplate = () => {
     { name: "Host/DJ", icon: <Music size={32} />, fields: ["Host/DJ Name", "Playlist Style", "Price"] },
   ];
 
-  const handleOptionClick = (option) => setSelectedOption(option);
+  const handleOptionClick = (option: EventOption) => setSelectedOption(option);
 
-  const handleFieldChange = (fieldName, value) => {
+  const handleFieldChange = (fieldName: string, value: string) => {
     const numericValue = fieldName === "Price" ? parseFloat(value) || 0 : value;
 
     setDetailsData((prev) => {
-      const updatedDetails = {
+      const updatedDetails: DetailsData = {
         ...prev,
-        [selectedOption.name]: {
-          ...prev[selectedOption.name],
+        [selectedOption!.name]: {
+          ...prev[selectedOption!.name],
           [fieldName]: numericValue,
         },
       };
 
-      // Recalculate the total price whenever a "Price" field changes
       const updatedTotalPrice = Object.values(updatedDetails).reduce((sum, category) => {
-        const price = parseFloat(category.Price) || 0;
+        const price = parseFloat((category as { Price?: number }).Price?.toString() || "0");
         return sum + price;
       }, 0);
 
@@ -140,7 +151,7 @@ const AddTemplate = () => {
                   <label className="block mb-2 text-sm font-medium">Event Date</label>
                   <DatePicker
                     selected={selectedDate}
-                    onChange={(date) => setSelectedDate(date)}
+                    onChange={(date: Date | null) => setSelectedDate(date)}
                     className="block w-full p-2 border rounded dark:bg-gray-700 dark:text-white"
                     placeholderText="Select a date"
                   />
@@ -192,4 +203,3 @@ const AddTemplate = () => {
 };
 
 export default AddTemplate;
-``

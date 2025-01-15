@@ -17,7 +17,7 @@ const Navbar = () => {
   const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
   const { data: users, isLoading: loadingUsers } = useGetUsersQuery();
 
-  const user = users?.find((user) => user.id === 2);
+  const user = users?.find((user) => user.id === 1);
 
   return (
     <div className="flex items-center justify-between bg-white px-4 py-3 dark:bg-black">
