@@ -113,13 +113,13 @@ export default function SavingPlans() {
             className="p-2 border rounded w-24 dark:bg-gray-700 dark:text-white"
           />
         </div>
-        <div className="mt-2 text-gray-800 dark:text-white">
+        {/* <div className="mt-2 text-gray-800 dark:text-white">
           {goalReached ? (
             <p className="text-green-500 font-semibold">Congratulations! You've reached your savings goal.</p>
           ) : (
             <p className="text-yellow-500">You&apos;re ${goal - totalSaved} away from your goal.</p>
           )}
-        </div>
+        </div> */}
       </div>
 
       {/* Add Savings */}
