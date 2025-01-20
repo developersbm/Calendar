@@ -41,11 +41,11 @@ const formFields = {
   },
 };
 
-const AuthProvider = ({ children }: any) => {
+const AuthProvider = ({ children }) => {
   return (
     <div>
       <Authenticator formFields={formFields}>
-        {({ user }: any) =>
+        {({ user }) =>
           user ? (
             <div>{children}</div>
           ) : (
