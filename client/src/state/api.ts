@@ -41,7 +41,6 @@ export const api = createApi({
     // Users
     getAuthUser: build.query({
       queryFn: async (_, _queryApi, _extraoptions, fetchWithBQ) => {
-        try {
           const user = await getCurrentUser();
           const session = await fetchAuthSession();
           if (!session) throw new Error("No session found");
@@ -51,10 +50,7 @@ export const api = createApi({
           const userDetails = userDetailsResponse.data as User;
 
           return { data: { user, userSub, userDetails } };
-        } catch (error) {
-          return { error: error.message || "Could not fetch user data" };
-        }
-      },
+      }
     }),
     getUsers: build.query<User[], void>({
       query: () => "user",
