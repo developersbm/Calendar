@@ -35,30 +35,29 @@ export const getUser = async (req: Request, res: Response): Promise<void> => {
 // Create User
 export const postUser = async (req: Request, res: Response) => {
     try {
-        const {
+      const {
         name,
         email,
         cognitoId,
         membershipId,
         calendarId,
-        createdAt,
-        updatedAt
-        } = req.body;
-        const newUser = await prisma.user.create({
+      } = req.body;
+  
+      const newUser = await prisma.user.create({
         data: {
-            name,
-            email,
-            cognitoId,
-            membershipId,
-            calendarId,
-            createdAt,
-            updatedAt
+          name,
+          email,
+          cognitoId,
+          membershipId,
+          calendarId,
         },
-        });
-        res.json({ message: "User Created Successfully", newUser });
+      });
+  
+        res.status(201).json(newUser);
     } catch (error: any) {
-        res
-        .status(500)
-        .json({ message: `Error retrieving users: ${error.message}` });
+      console.error("Error creating user:", error);
+        res.status(500).json({
+        message: `Error creating user: ${error.message}`,
+      });
     }
 };

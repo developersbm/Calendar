@@ -6,18 +6,28 @@ import Link from "next/link";
 import { useAppDispatch, useAppSelector } from "@/app/redux";
 import { setIsDarkMode, setIsSidebarCollapsed } from "@/state";
 import Image from "next/image";
-import profile from "../../../public/profile.png"
-import { useGetUsersQuery } from "@/state/api";
+import profile from "../../../public/profile.png";
+import { useGetAuthUserQuery } from "@/state/api";
+import { signOut } from "aws-amplify/auth";
 
 const Navbar = () => {
   const dispatch = useAppDispatch();
   const isSidebarCollapsed = useAppSelector(
-    (state) => state.global.isSidebarCollapsed,
+    (state) => state.global.isSidebarCollapsed
   );
   const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
-  const { data: users } = useGetUsersQuery();
 
-  const user = users?.find((user) => user.id === 1);
+  const { data: currentUser } = useGetAuthUserQuery({});
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Error signing out: ", error);
+    }
+  };
+
+  if (!currentUser) return null;
+  const user = currentUser?.userDetails;
 
   return (
     <div className="flex items-center justify-between bg-white px-4 py-3 dark:bg-black">
@@ -60,22 +70,30 @@ const Navbar = () => {
         <div className="ml-2 mr-5 hidden min-h-[2em] w-[0.1rem] bg-gray-200 md:inline-block"></div>
         <div className="hidden items-center justify-between md:flex">
           <div className="align-center flex h-9 w-9 justify-center">
-              <Image
-                src={profile}
-                alt={""}
-                width={100}
-                height={50}
-                className="h-full rounded-full object-cover"
-              />
-              <User className="h-6 w-6 cursor-pointer self-center rounded-full dark:text-white" />
+            <Image
+              src={profile}
+              alt={"Profile"}
+              width={100}
+              height={50}
+              className="h-full rounded-full object-cover"
+            />
+            <User className="h-6 w-6 cursor-pointer self-center rounded-full dark:text-white" />
           </div>
           <span className="mx-3 text-gray-800 dark:text-white">
             {user ? (
-            <h1>{user.name}</h1>
+              <h1>{user.name}</h1>
             ) : (
-              <h1> No User </h1>
+              <h1>No User</h1>
             )}
           </span>
+
+          {/* Sign-out button */}
+          <button
+            onClick={handleSignOut}
+            className="ml-4 rounded p-2 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            Sign Out
+          </button>
         </div>
       </div>
     </div>
