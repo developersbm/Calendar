@@ -11,6 +11,17 @@ import { useGetAuthUserQuery } from "@/state/api";
 import { signOut } from "aws-amplify/auth";
 import axios from "axios";
 
+// Define User interface
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  cognitoId: string;
+  membershipId: number;
+  calendarId?: number;
+  profilePicture?: string;
+}
+
 const Navbar = () => {
   const dispatch = useAppDispatch();
   const isSidebarCollapsed = useAppSelector(
@@ -18,7 +29,7 @@ const Navbar = () => {
   );
   const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
 
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   const { data: authUser } = useGetAuthUserQuery({});
 
