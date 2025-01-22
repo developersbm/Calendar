@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Menu, Moon, Settings, Sun, User } from "lucide-react";
 import Link from "next/link";
 import { useAppDispatch, useAppSelector } from "@/app/redux";
@@ -9,6 +9,7 @@ import Image from "next/image";
 import profile from "../../../public/profile.png";
 import { useGetAuthUserQuery } from "@/state/api";
 import { signOut } from "aws-amplify/auth";
+import axios from "axios";
 
 const Navbar = () => {
   const dispatch = useAppDispatch();
@@ -17,7 +18,24 @@ const Navbar = () => {
   );
   const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
 
-  const { data: currentUser } = useGetAuthUserQuery({});
+  const [user, setUser] = useState<any>(null);
+
+  const { data: authUser } = useGetAuthUserQuery({});
+
+  useEffect(() => {
+    if (authUser?.userDetails?.cognitoId) {
+      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+      axios
+        .get(`${apiUrl}/api/users/${authUser.userDetails.cognitoId}`)
+        .then((response) => {
+          setUser(response.data);
+        })
+        .catch((error) => {
+          console.error("Error fetching user details: ", error);
+        });
+    }
+  }, [authUser]);
+
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -26,8 +44,7 @@ const Navbar = () => {
     }
   };
 
-  if (!currentUser) return null;
-  const user = currentUser?.userDetails;
+  if (!user) return null;
 
   return (
     <div className="flex items-center justify-between bg-white px-4 py-3 dark:bg-black">
@@ -80,11 +97,7 @@ const Navbar = () => {
             <User className="h-6 w-6 cursor-pointer self-center rounded-full dark:text-white" />
           </div>
           <span className="mx-3 text-gray-800 dark:text-white">
-            {user ? (
-              <h1>{user.name}</h1>
-            ) : (
-              <h1>No User</h1>
-            )}
+            {user?.name || "No User"}
           </span>
 
           {/* Sign-out button */}

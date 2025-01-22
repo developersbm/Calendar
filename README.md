@@ -33,6 +33,7 @@ sudo apt install postgresql
 1. npx prisma generate
 2. npx prisma migrate dev --name init
 3. npm run seed
+4. npx prisma migrate reset
 
 Backend
 1. npm i express body-parser cors dotenv helmet morgan
