@@ -27,10 +27,11 @@ model User {
   cognitoId        String    @unique
   membershipId     Int
   membership       Membership @relation(fields: [membershipId], references: [id])
-  calendarId       Int
-  calendar         Calendar  @relation(fields: [calendarId], references: [id])
+  calendarId       Int?
+  calendar         Calendar?  @relation(fields: [calendarId], references: [id])
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
+  profilePicture   String?
 
   GroupMember      GroupMember[]
   EventParticipant EventParticipant[]
@@ -44,7 +45,7 @@ model Group {
   id          Int           @id @default(autoincrement())
   title       String
   description String?
-  iconUrl     String
+  iconUrl     String?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   members     GroupMember[]
@@ -122,23 +123,33 @@ model Template {
   isActive    Boolean   @default(true)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  savingPlans SavingPlan[]
 
   @@map("templates")
 }
 
 model SavingPlan {
-  id             Int       @id @default(autoincrement())
-  templateId     Int
+  id             Int           @id @default(autoincrement())
   goalAmount     Float
-  currentBalance Float
+  currentBalance Float          @default(0)
   frequency      String
-  linkedTemplate Template   @relation(fields: [templateId], references: [id])
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  transactions   Transaction[] // Relation to the Transaction model
 
   @@map("saving_plans")
 }
+
+model Transaction {
+  id          Int       @id @default(autoincrement())
+  savingPlanId Int
+  type        String    // Either "Deposit" or "Withdraw"
+  amount      Float
+  date        DateTime  @default(now())
+  savingPlan  SavingPlan @relation(fields: [savingPlanId], references: [id])
+
+  @@map("transactions")
+}
+
 
 model Notification {
   id          Int      @id @default(autoincrement())

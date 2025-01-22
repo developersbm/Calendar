@@ -29,18 +29,27 @@ interface DetailsData {
 
 const AddTemplate: React.FC = () => {
   const [templateTitle, setTemplateTitle] = useState<string>("Click to edit event name");
+  const [description, setDescription] = useState<string>(""); // Added description
   const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
   const [selectedOption, setSelectedOption] = useState<EventOption | null>(null);
   const [detailsData, setDetailsData] = useState<DetailsData>({});
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+  const [isActive, setIsActive] = useState<boolean>(true); // Added isActive toggle
+
+  const mockOwnerId = 1; // Replace with authenticated user logic
 
   const handleTitleClick = () => setIsEditingTitle(true);
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => setTemplateTitle(e.target.value);
   const handleTitleBlur = () => setIsEditingTitle(false);
 
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) =>
+    setDescription(e.target.value);
+
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
+
+  const toggleActive = () => setIsActive((prev) => !prev);
 
   const eventOptions: EventOption[] = [
     { name: "Date", icon: <Calendar size={32} />, fields: ["Event Date"] },
@@ -72,6 +81,19 @@ const AddTemplate: React.FC = () => {
       setTotalPrice(updatedTotalPrice);
       return updatedDetails;
     });
+  };
+
+  const handleSubmit = () => {
+    const templateData = {
+      title: templateTitle,
+      description,
+      ownerId: mockOwnerId,
+      elements: JSON.stringify(detailsData),
+      isActive,
+    };
+
+    console.log("Template to Submit:", templateData);
+    // Replace with actual API call
   };
 
   return (
@@ -126,6 +148,14 @@ const AddTemplate: React.FC = () => {
             )}
           </div>
 
+          {/* Description */}
+          <textarea
+            value={description}
+            onChange={handleDescriptionChange}
+            placeholder="Enter a description"
+            className="w-full mt-4 p-2 border rounded dark:bg-gray-700 dark:text-white"
+          />
+
           {/* Event Buttons */}
           <div className="flex justify-center space-x-4 mt-6">
             {eventOptions.map((option) => (
@@ -165,38 +195,41 @@ const AddTemplate: React.FC = () => {
                       value={detailsData[selectedOption.name]?.[field] || ""}
                       onChange={(e) => handleFieldChange(field, e.target.value)}
                       className="block w-full p-2 border rounded dark:bg-gray-700 dark:text-white"
-                      placeholder={`Enter ${field.toLowerCase()}`}
                     />
                   </div>
                 ))
               )}
             </div>
           )}
-        </div>
-      </div>
 
-      {/* Bottom Menu */}
-      <div
-        className={`fixed bottom-0 h-16 bg-gray-200 dark:bg-gray-900 w-full flex justify-around items-center z-10 transition-all duration-300 ${
-          isSidebarOpen ? "pl-64" : ""
-        }`}
-      >
-        <div className="text-center">
-          <p className="font-bold text-gray-800 dark:text-white">Total Money</p>
-          <p className="text-green-500 dark:text-green-400">${totalPrice.toFixed(2)}</p>
+          {/* Total Price */}
+          <div className="flex items-center justify-center mt-8">
+            <h2 className="text-xl font-bold dark:text-white">Total Price: ${totalPrice}</h2>
+          </div>
+
+          {/* isActive Toggle */}
+          <div className="flex justify-center mt-4">
+            <label className="flex items-center space-x-3">
+              <input
+                type="checkbox"
+                checked={isActive}
+                onChange={toggleActive}
+                className="w-6 h-6 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-500"
+              />
+              <span className="text-gray-700 dark:text-white">Active</span>
+            </label>
+          </div>
+
+          {/* Submit Button */}
+          <div className="flex justify-center mt-6">
+            <button
+              onClick={handleSubmit}
+              className="px-6 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 dark:bg-blue-700 dark:hover:bg-blue-800"
+            >
+              Save Template
+            </button>
+          </div>
         </div>
-        <button className="flex items-center justify-center w-16 h-16 bg-blue-500 rounded-full hover:bg-blue-600 focus:outline-none">
-          <Share2 size={28} className="text-white" />
-        </button>
-        <button className="flex items-center justify-center w-16 h-16 bg-yellow-500 rounded-full hover:bg-yellow-600 focus:outline-none">
-          <Star size={28} className="text-white" />
-        </button>
-        <button
-          onClick={() => alert("Template Added!")}
-          className="flex items-center justify-center w-16 h-16 bg-green-500 rounded-full hover:bg-green-600 focus:outline-none"
-        >
-          <CirclePlus size={28} className="text-white" />
-        </button>
       </div>
     </div>
   );

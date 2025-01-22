@@ -34,30 +34,48 @@ export const getUser = async (req: Request, res: Response): Promise<void> => {
 
 // Create User
 export const postUser = async (req: Request, res: Response) => {
-    try {
-      const {
+  try {
+    const { name, email, cognitoId } = req.body;
+
+    // Create a new Membership
+    const newMembership = await prisma.membership.create({
+      data: {
+        type: "Free", // Default membership type
+      },
+    });
+
+    // Create the User (without the calendarId for now)
+    const newUser = await prisma.user.create({
+      data: {
         name,
         email,
         cognitoId,
-        membershipId,
-        calendarId,
-      } = req.body;
-  
-      const newUser = await prisma.user.create({
-        data: {
-          name,
-          email,
-          cognitoId,
-          membershipId,
-          calendarId,
-        },
-      });
-  
-        res.status(201).json(newUser);
-    } catch (error: any) {
-      console.error("Error creating user:", error);
-        res.status(500).json({
-        message: `Error creating user: ${error.message}`,
-      });
-    }
+        membershipId: newMembership.id,
+      },
+    });
+
+    // Create a new Calendar for the user
+    const newCalendar = await prisma.calendar.create({
+      data: {
+        ownerId: newUser.id,
+        ownerType: "User",
+        description: `${name}'s personal calendar`,
+      },
+    });
+
+    // Update the User with the calendarId
+    const updatedUser = await prisma.user.update({
+      where: { id: newUser.id },
+      data: {
+        calendarId: newCalendar.id,
+      },
+    });
+
+    res.status(201).json(updatedUser);
+  } catch (error: any) {
+    console.error("Error creating user:", error);
+    res.status(500).json({
+      message: `Error creating user: ${error.message}`,
+    });
+  }
 };
