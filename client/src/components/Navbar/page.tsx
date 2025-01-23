@@ -1,17 +1,15 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Menu, Moon, Settings, Sun, User } from "lucide-react";
 import Link from "next/link";
 import { useAppDispatch, useAppSelector } from "@/app/redux";
 import { setIsDarkMode, setIsSidebarCollapsed } from "@/state";
 import Image from "next/image";
 import profile from "../../../public/profile.png";
-import { useGetAuthUserQuery } from "@/state/api";
+import { useGetAuthUserQuery, useGetUserQuery } from "@/state/api";
 import { signOut } from "aws-amplify/auth";
-import axios from "axios";
 
-// Define User interface
 interface User {
   id: number;
   name: string;
@@ -29,23 +27,12 @@ const Navbar = () => {
   );
   const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
 
-  const [user, setUser] = useState<User | null>(null);
+  const { data: authData, isLoading: isAuthLoading } = useGetAuthUserQuery({});
+  const userId = authData?.user?.userId;
 
-  const { data: authUser } = useGetAuthUserQuery({});
-
-  useEffect(() => {
-    if (authUser?.userDetails?.cognitoId) {
-      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-      axios
-        .get(`${apiUrl}/api/users/${authUser.userDetails.cognitoId}`)
-        .then((response) => {
-          setUser(response.data);
-        })
-        .catch((error) => {
-          console.error("Error fetching user details: ", error);
-        });
-    }
-  }, [authUser]);
+  const { data: user, isLoading: isUserLoading } = useGetUserQuery(userId ?? "", {
+    skip: !userId,
+  });
 
   const handleSignOut = async () => {
     try {
@@ -54,9 +41,6 @@ const Navbar = () => {
       console.error("Error signing out: ", error);
     }
   };
-
-  if (!user) return null;
-
   return (
     <div className="flex items-center justify-between bg-white px-4 py-3 dark:bg-black">
       <div className="flex items-center gap-8">

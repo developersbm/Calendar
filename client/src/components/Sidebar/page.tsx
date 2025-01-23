@@ -17,7 +17,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React, { useState } from "react";
 import profile from "../../../public/profile.png";
-import { useGetAuthUserQuery, useGetGroupMembersQuery, useGetGroupsQuery, useGetTemplatesQuery } from "@/state/api";
+import {
+  useGetAuthUserQuery,
+  useGetGroupMembersQuery,
+  useGetGroupsQuery,
+  useGetTemplatesQuery,
+  useGetUserQuery,
+} from "@/state/api";
 import { useAppDispatch, useAppSelector } from "@/app/redux";
 import { setIsSidebarCollapsed } from "@/state";
 import { signOut } from "aws-amplify/auth";
@@ -26,13 +32,21 @@ const Sidebar = () => {
   const [showGroups, setShowGroups] = useState(true);
   const [showTemplate, setShowTemplate] = useState(true);
 
-  const { data: currentUser } = useGetAuthUserQuery({});
+  const { data: authData, isLoading: isAuthLoading } = useGetAuthUserQuery({});
+  const userId = authData?.user?.userId;
+
+  const { data: user, isLoading: isUserLoading } = useGetUserQuery(userId ?? "", {
+    skip: !userId,
+  });  
+
   const { data: groups } = useGetGroupsQuery();
   const { data: groupMembers } = useGetGroupMembersQuery();
   const { data: templates } = useGetTemplatesQuery();
 
   const dispatch = useAppDispatch();
-  const isSidebarCollapsed = useAppSelector((state) => state.global.isSidebarCollapsed);
+  const isSidebarCollapsed = useAppSelector(
+    (state) => state.global.isSidebarCollapsed
+  );
 
   const sidebarClassNames = `fixed top-0 left-0 flex flex-col h-full z-40 transition-transform duration-300 
     shadow-xl dark:bg-black bg-white overflow-y-auto
@@ -40,15 +54,10 @@ const Sidebar = () => {
     w-64
   `;
 
-  if (!currentUser) return null;
-  const user = currentUser?.userDetails;
-
-  // Filter groups the user belongs to
   const userGroups = groupMembers
     ?.filter((gm) => gm.userId === user?.id && gm.status === "Active")
     .map((gm) => groups?.find((g) => g.id === gm.groupId)) || [];
 
-  // Filter templates the user owns
   const userTemplates = templates?.filter((tp) => tp.ownerId === user?.id) || [];
 
   const handleSignOut = async () => {
@@ -78,7 +87,9 @@ const Sidebar = () => {
         </div>
 
         {/* USER */}
-        {user ? (
+        {isUserLoading ? (
+          <p className="px-8 py-4 text-sm text-gray-500">Loading user data...</p>
+        ) : user ? (
           <div className="flex items-center gap-5 border-y-[1.5px] border-gray-200 px-8 py-4 dark:border-gray-700">
             <Image src={profile} alt="" width={40} height={40} className="rounded-full" />
             <div>
@@ -115,16 +126,15 @@ const Sidebar = () => {
                 href={`/groups`}
               />
             ))}
+          <Link
+            href="/groups"
+            className="flex w-full items-center gap-3 px-8 py-3 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            <CirclePlus className="h-6 w-6" />
+            <span className="font-medium">Add Groups</span>
+          </Link>
           </div>
         )}
-
-        <Link
-          href="/groups"
-          className="flex w-full items-center gap-3 px-8 py-3 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
-        >
-          <CirclePlus className="h-6 w-6" />
-          <span className="font-medium">View Groups</span>
-        </Link>
 
         {/* TEMPLATES */}
         <button
@@ -156,13 +166,14 @@ const Sidebar = () => {
 
         {/* Sign-out button for small screens */}
         <div className="block md:hidden">
-          <button
-            onClick={handleSignOut}
-            className="flex w-full items-center gap-3 px-8 py-3 text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            <LogOut className="h-6 w-6" />
-            <span className="font-medium">Sign Out</span>
-          </button>
+        {/* Sign-out button */}
+        <button
+          onClick={handleSignOut}
+          className="flex w-full items-center gap-3 px-8 py-3 text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+        >
+          <LogOut className="h-6 w-6" />
+          <span className="font-medium">Sign Out</span>
+        </button>
         </div>
       </div>
     </div>

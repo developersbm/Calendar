@@ -134,7 +134,7 @@ model SavingPlan {
   frequency      String
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
-  transactions   Transaction[] // Relation to the Transaction model
+  transactions   Transaction[]  // Relation to the Transaction model
 
   @@map("saving_plans")
 }

@@ -52,6 +52,10 @@ export const api = createApi({
           return { data: { user, userSub, userDetails } };
       }
     }),
+    getUser: build.query<User, string>({
+      query: (id) => `user/${id}`,
+      providesTags: (result, error, id) => [{ type: "Users", id }],
+    }),    
     getUsers: build.query<User[], void>({
       query: () => "user",
       providesTags: ["Users"],
@@ -159,6 +163,7 @@ export const api = createApi({
 
 export const {
   useGetAuthUserQuery,
+  useGetUserQuery,
   useGetUsersQuery,
   useCreateUserMutation,
   useGetGroupsQuery,
