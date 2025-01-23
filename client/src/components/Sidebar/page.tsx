@@ -32,7 +32,7 @@ const Sidebar = () => {
   const [showGroups, setShowGroups] = useState(true);
   const [showTemplate, setShowTemplate] = useState(true);
 
-  const { data: authData, isLoading: isAuthLoading } = useGetAuthUserQuery({});
+  const { data: authData } = useGetAuthUserQuery({});
   const userId = authData?.user?.userId;
 
   const { data: user, isLoading: isUserLoading } = useGetUserQuery(userId ?? "", {

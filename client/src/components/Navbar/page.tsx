@@ -27,10 +27,10 @@ const Navbar = () => {
   );
   const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
 
-  const { data: authData, isLoading: isAuthLoading } = useGetAuthUserQuery({});
+  const { data: authData } = useGetAuthUserQuery({});
   const userId = authData?.user?.userId;
 
-  const { data: user, isLoading: isUserLoading } = useGetUserQuery(userId ?? "", {
+  const { data: user } = useGetUserQuery(userId ?? "", {
     skip: !userId,
   });
 
