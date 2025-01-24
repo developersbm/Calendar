@@ -41,7 +41,10 @@ const formFields = {
     },
   },
 };
-
+interface AuthUser {
+  username: string;
+  email?: string;
+}
 interface AuthProviderProps {
   children: ReactNode;
 }
@@ -59,7 +62,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   return (
     <div>
       <Authenticator formFields={formFields}>
-        {({ user }: { user?: any }) => {
+        {({ user }: { user?: AuthUser | null }) => {
           return user ? (
             <>{children}</>
           ) : (
