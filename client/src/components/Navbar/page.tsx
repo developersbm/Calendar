@@ -52,34 +52,36 @@ const Navbar = () => {
           </button>
         )}
       </div>
+    {/* Navbar User Info */}
+    <div className="flex items-center">
+      <button
+        onClick={() => dispatch(setIsDarkMode(!isDarkMode))}
+        className={
+          isDarkMode
+            ? `rounded p-2 dark:hover:bg-gray-700`
+            : `rounded p-2 hover:bg-gray-100`
+        }
+      >
+        {isDarkMode ? (
+          <Sun className="h-6 w-6 cursor-pointer dark:text-white" />
+        ) : (
+          <Moon className="h-6 w-6 cursor-pointer dark:text-white" />
+        )}
+      </button>
+      <Link
+        href="/settings"
+        className={
+          isDarkMode
+            ? `h-min w-min rounded p-2 dark:hover:bg-gray-700`
+            : `h-min w-min rounded p-2 hover:bg-gray-100`
+        }
+      >
+        <Settings className="h-6 w-6 cursor-pointer dark:text-white" />
+      </Link>
+      <div className="ml-2 mr-5 hidden min-h-[2em] w-[0.1rem] bg-gray-200 md:inline-block"></div>
 
-      {/* Icons */}
-      <div className="flex items-center">
-        <button
-          onClick={() => dispatch(setIsDarkMode(!isDarkMode))}
-          className={
-            isDarkMode
-              ? `rounded p-2 dark:hover:bg-gray-700`
-              : `rounded p-2 hover:bg-gray-100`
-          }
-        >
-          {isDarkMode ? (
-            <Sun className="h-6 w-6 cursor-pointer dark:text-white" />
-          ) : (
-            <Moon className="h-6 w-6 cursor-pointer dark:text-white" />
-          )}
-        </button>
-        <Link
-          href="/settings"
-          className={
-            isDarkMode
-              ? `h-min w-min rounded p-2 dark:hover:bg-gray-700`
-              : `h-min w-min rounded p-2 hover:bg-gray-100`
-          }
-        >
-          <Settings className="h-6 w-6 cursor-pointer dark:text-white" />
-        </Link>
-        <div className="ml-2 mr-5 hidden min-h-[2em] w-[0.1rem] bg-gray-200 md:inline-block"></div>
+      {/* If the user is authenticated, show their profile and sign out */}
+      {user ? (
         <div className="hidden items-center justify-between md:flex">
           <div className="align-center flex h-9 w-9 justify-center">
             <Image
@@ -91,19 +93,35 @@ const Navbar = () => {
             />
             <User className="h-6 w-6 cursor-pointer self-center rounded-full dark:text-white" />
           </div>
-          <span className="mx-3 text-gray-800 dark:text-white">
-            {user?.name || "No User"}
-          </span>
+          <span className="mx-3 text-gray-800 dark:text-white">{user.name}</span>
 
           {/* Sign-out button */}
-          <button
+          <Link
+            href={"/auth"}
             onClick={handleSignOut}
             className="ml-4 rounded p-2 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             Sign Out
-          </button>
+          </Link>
         </div>
-      </div>
+      ) : (
+        // If not authenticated, show "Sign In" and "Create Account" buttons
+        <div className="flex gap-2">
+          <Link
+            href="/auth"
+            className="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600"
+          >
+            Sign In
+          </Link>
+          <Link
+            href="/auth"
+            className="px-4 py-2 rounded border border-blue-500 text-blue-500 hover:bg-blue-100"
+          >
+            Create an Account
+          </Link>
+        </div>
+      )}
+    </div>
     </div>
   );
 };

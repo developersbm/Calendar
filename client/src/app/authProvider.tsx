@@ -1,6 +1,7 @@
-import React, { ReactNode } from "react";
+import React, { ReactNode, useEffect } from "react";
 import { Authenticator } from "@aws-amplify/ui-react";
 import { Amplify } from "aws-amplify";
+import { useRouter } from "next/navigation";
 import "@aws-amplify/ui-react/styles.css";
 
 Amplify.configure({
@@ -45,24 +46,28 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-interface AuthUser {
-  username: string;
-  email?: string;
-}
-
 const AuthProvider = ({ children }: AuthProviderProps) => {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Handle redirect on authentication
+      router.push("/");
+
+    return; // Cleanup listener
+  }, [router]);
+
   return (
     <div>
       <Authenticator formFields={formFields}>
-        {({ user }: { user?: AuthUser | null }) =>
-          user ? (
-            <div>{children}</div>
+        {({ user }: { user?: any }) => {
+          return user ? (
+            <>{children}</>
           ) : (
             <div>
               <h1>Please sign in below:</h1>
             </div>
-          )
-        }
+          );
+        }}
       </Authenticator>
     </div>
   );

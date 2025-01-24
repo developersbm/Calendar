@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState } from "react";
 import {
   Briefcase,
   ChevronDown,
@@ -15,7 +16,6 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import React, { useState } from "react";
 import profile from "../../../public/profile.png";
 import {
   useGetAuthUserQuery,
@@ -37,7 +37,7 @@ const Sidebar = () => {
 
   const { data: user, isLoading: isUserLoading } = useGetUserQuery(userId ?? "", {
     skip: !userId,
-  });  
+  });
 
   const { data: groups } = useGetGroupsQuery();
   const { data: groupMembers } = useGetGroupMembersQuery();
@@ -98,7 +98,9 @@ const Sidebar = () => {
             </div>
           </div>
         ) : (
-          <p className="px-8 py-4 text-sm text-gray-500">User not found.</p>
+          <div className="flex flex-col items-center gap-2 px-10 py-4 text-sm text-gray-500">
+            <p className="mb-2 text-center">Sign in to access personalized features</p>
+          </div>
         )}
 
         {/* NAVBAR LINKS */}
@@ -126,13 +128,13 @@ const Sidebar = () => {
                 href={`/groups`}
               />
             ))}
-          <Link
-            href="/groups"
-            className="flex w-full items-center gap-3 px-8 py-3 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            <CirclePlus className="h-6 w-6" />
-            <span className="font-medium">Add Groups</span>
-          </Link>
+            <Link
+              href="/groups"
+              className="flex w-full items-center gap-3 px-8 py-3 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <CirclePlus className="h-6 w-6" />
+              <span className="font-medium">Add Groups</span>
+            </Link>
           </div>
         )}
 
@@ -165,16 +167,17 @@ const Sidebar = () => {
         )}
 
         {/* Sign-out button for small screens */}
-        <div className="block md:hidden">
-        {/* Sign-out button */}
-        <button
-          onClick={handleSignOut}
-          className="flex w-full items-center gap-3 px-8 py-3 text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700"
-        >
-          <LogOut className="h-6 w-6" />
-          <span className="font-medium">Sign Out</span>
-        </button>
-        </div>
+        {user && (
+          <div className="block md:hidden">
+            <button
+              onClick={handleSignOut}
+              className="flex w-full items-center gap-3 px-8 py-3 text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <LogOut className="h-6 w-6" />
+              <Link href="/auth" className="font-medium">Sign Out</Link>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

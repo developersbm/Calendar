@@ -1,14 +1,14 @@
 "use client";
 
 import React, { useEffect } from "react";
+import { usePathname } from "next/navigation";
 import Navbar from "@/components/Navbar/page";
 import Sidebar from "@/components/Sidebar/page";
 import StoreProvider, { useAppSelector } from "./redux";
-import AuthProvider from "./authProvider";
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const isSidebarCollapsed = useAppSelector(
-    (state) => state.global.isSidebarCollapsed,
+    (state) => state.global.isSidebarCollapsed
   );
   const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
 
@@ -36,11 +36,15 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 };
 
 const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
+  const pathname = usePathname();
+
+  if (pathname === "/auth") {
+    return <>{children}</>;
+  }
+
   return (
     <StoreProvider>
-      <AuthProvider>
-        <DashboardLayout>{children}</DashboardLayout>
-      </AuthProvider>
+      <DashboardLayout>{children}</DashboardLayout>
     </StoreProvider>
   );
 };
