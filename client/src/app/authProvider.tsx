@@ -1,7 +1,10 @@
-import React, { ReactNode, useEffect } from "react";
+"use client";
+
+import React, { useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Authenticator } from "@aws-amplify/ui-react";
 import { Amplify } from "aws-amplify";
-import { useRouter } from "next/navigation";
+import { Hub } from "aws-amplify/utils";
 import "@aws-amplify/ui-react/styles.css";
 
 Amplify.configure({
@@ -22,7 +25,7 @@ const formFields = {
       inputProps: { required: true },
     },
     email: {
-      order: 1,
+      order: 2,
       placeholder: "Enter your email address",
       label: "Email",
       inputProps: { type: "email", required: true },
@@ -41,39 +44,48 @@ const formFields = {
     },
   },
 };
+
 interface AuthUser {
   username: string;
   email?: string;
 }
-interface AuthProviderProps {
-  children: ReactNode;
-}
 
-const AuthProvider = ({ children }: AuthProviderProps) => {
+const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
 
+  const stableRouter = useMemo(() => router, [router]);
+
   useEffect(() => {
-    // Handle redirect on authentication
-      router.push("/");
+    const listener = Hub.listen("auth", (data) => {
+      if (data?.payload?.event === "signedIn") {
+        stableRouter.push("/");
+      }
+    });
 
-    return; // Cleanup listener
-  }, [router]);
-
+    return () => {
+      listener();
+    };
+  }, [stableRouter]);
+  
+  interface AuthUser {
+    username: string;
+    email?: string;
+  }
   return (
-    <div>
-      <Authenticator formFields={formFields}>
-        {({ user }: { user?: AuthUser | null }) => {
-          return user ? (
-            <>{children}</>
-          ) : (
+    <Authenticator formFields={formFields}>
+      {( {user}: { user?: AuthUser | null }) => {
+        if (user) {
+          return (
             <div>
-              <h1>Please sign in below:</h1>
+              {children}
             </div>
           );
-        }}
-      </Authenticator>
-    </div>
+        }
+        return <p>Redirecting to login...</p>;
+      }}
+    </Authenticator>
   );
 };
+
 
 export default AuthProvider;
