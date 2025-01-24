@@ -45,11 +45,6 @@ const formFields = {
   },
 };
 
-interface AuthUser {
-  username: string;
-  email?: string;
-}
-
 const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
 
