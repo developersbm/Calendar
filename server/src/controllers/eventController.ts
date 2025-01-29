@@ -37,9 +37,37 @@ export const getEvent = async (req: Request, res: Response): Promise<void> => {
     }
 };
 
+// Fetch events for a calendar
+export const getEventCalendar = async (req: Request, res: Response): Promise<void> => {
+  const { calendarId } = req.query;
+
+  if (!calendarId) {
+    res.status(400).json({ message: "Calendar ID is required." });
+    return;
+  }
+
+  try {
+    const events = await prisma.event.findMany({
+      where: { calendarId: Number(calendarId) },
+      include: {
+        participants: true,
+        calendar: true,
+      },
+    });
+    res.status(200).json(events);
+  } catch (error: any) {
+    res.status(500).json({ message: `Error retrieving events: ${error.message}` });
+  }
+};
+
 // Create an event
 export const postEvent = async (req: Request, res: Response): Promise<void> => {
   const { title, description, startTime, endTime, recurrence, endRecurrence, calendarId } = req.body;
+
+  if (!calendarId) {
+    res.status(400).json({ message: "Calendar ID is required." });
+    return;
+  }
 
   try {
     const newEvent = await prisma.event.create({

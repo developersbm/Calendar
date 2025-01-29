@@ -6,6 +6,7 @@ import { Authenticator } from "@aws-amplify/ui-react";
 import { Amplify } from "aws-amplify";
 import { Hub } from "aws-amplify/utils";
 import "@aws-amplify/ui-react/styles.css";
+import { signOut } from "aws-amplify/auth";
 
 Amplify.configure({
   Auth: {
@@ -66,7 +67,18 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     username: string;
     email?: string;
   }
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      console.log("User signed out");
+
+    } catch (error) {
+      console.error("Error signing out: ", error);
+    }
+  };  
   return (
+
     <Authenticator formFields={formFields}>
       {( {user}: { user?: AuthUser | null }) => {
         if (user) {
@@ -76,7 +88,15 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             </div>
           );
         }
-        return <p>Redirecting to login...</p>;
+        return <div>
+          <p>Sign Out if needed</p>
+          <button
+        onClick={handleSignOut}
+        className="px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600"
+          >
+            Sign Out
+          </button>
+          </div>;
       }}
     </Authenticator>
   );

@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
+import { CognitoIdentityProviderClient, AdminDeleteUserCommand } from "@aws-sdk/client-cognito-identity-provider";
 
 const prisma = new PrismaClient();
 
@@ -77,5 +78,42 @@ export const postUser = async (req: Request, res: Response) => {
     res.status(500).json({
       message: `Error creating user: ${error.message}`,
     });
+  }
+};
+
+// Delete User
+const cognitoClient = new CognitoIdentityProviderClient({ region: "us-east-1" });
+const userPoolId = process.env.COGNITO_USER_POOL_ID;
+
+export const delUser = async (req: Request, res: Response): Promise<void> => {
+  const { cognitoId } = req.params;
+
+  if (!userPoolId) {
+    res.status(500).json({ message: "Cognito User Pool ID is not configured." });
+    return;
+  }
+
+  try {
+    // Delete from Cognito
+    const command = new AdminDeleteUserCommand({
+      UserPoolId: userPoolId,
+      Username: cognitoId,
+    });
+
+    await cognitoClient.send(command);
+    console.log("User deleted from Cognito");
+
+    // Delete from Database
+    const deletedUser = await prisma.user.delete({
+      where: { cognitoId },
+    });
+
+    res.status(200).json({
+      message: "User deleted successfully from Cognito and database",
+      user: deletedUser,
+    });
+  } catch (error: any) {
+    console.error("Error deleting user:", error);
+    res.status(500).json({ message: `Error deleting user: ${error.message}` });
   }
 };

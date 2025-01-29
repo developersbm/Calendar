@@ -9,6 +9,8 @@ interface ModalProps {
     calendarId: number;
     startDate: string;
     endDate: string;
+    startTime: string;
+    endTime: string;
   }) => void;
   selectedDateRange?: { start: string; end: string };
 }
@@ -17,45 +19,46 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onSubmit, selectedDateRa
   const [title, setTitle] = React.useState("");
   const [description, setDescription] = React.useState("");
   const [calendarId, setCalendarId] = React.useState<number>(1);
-  const [startDate, setStartDate] = React.useState(selectedDateRange?.start || "");
-  const [endDate, setEndDate] = React.useState(selectedDateRange?.end || "");
+  const [startDate, setStartDate] = React.useState(selectedDateRange?.start.split("T")[0] || "");
+  const [endDate, setEndDate] = React.useState(selectedDateRange?.end.split("T")[0] || "");
+  const [startTime, setStartTime] = React.useState(selectedDateRange?.start.split("T")[1]?.slice(0, 5) || "");
+  const [endTime, setEndTime] = React.useState(selectedDateRange?.end.split("T")[1]?.slice(0, 5) || "");
 
   React.useEffect(() => {
     if (selectedDateRange) {
       const { start, end } = selectedDateRange;
-  
-      // Check if this is a single-day selection
-      const isSingleDay =
-        new Date(end).getTime() <= new Date(start).getTime() + 24 * 60 * 60 * 1000;
-  
-      setStartDate(start);
-  
-      if (isSingleDay) {
-        setEndDate(start);
-      } else {
-        // Subtract one day from the end date
-        const adjustedEndDate = new Date(new Date(end).getTime() - 24 * 60 * 60 * 1000)
-          .toISOString()
-          .split("T")[0]; // Convert back to `YYYY-MM-DD` format
-        setEndDate(adjustedEndDate);
-      }
+      setStartDate(start.split("T")[0]);
+      setStartTime(start.split("T")[1]?.slice(0, 5) || "");
+      setEndDate(end.split("T")[0]);
+      setEndTime(end.split("T")[1]?.slice(0, 5) || "");
     }
-  }, [selectedDateRange]);  
+  }, [selectedDateRange]);
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (new Date(`${startDate}T${startTime}`) > new Date(`${endDate}T${endTime}`)) {
+      alert("End date and time must be after start date and time.");
+      return;
+    }
+
     onSubmit({
       title,
       description,
       calendarId,
       startDate,
       endDate,
+      startTime,
+      endTime,
     });
+
     setTitle("");
     setDescription("");
     setCalendarId(1);
     setStartDate("");
     setEndDate("");
+    setStartTime("");
+    setEndTime("");
     onClose();
   };
 
@@ -91,15 +94,35 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onSubmit, selectedDateRa
               required
             />
           </label>
-              <label className="text-sm font-medium dark:text-gray-300">
-                End Date
-                <input
-                  type="date"
-                  className="border p-2 rounded w-full dark:bg-gray-700 dark:text-white"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  required
-                />
+          <label className="text-sm font-medium dark:text-gray-300">
+            Start Time
+            <input
+              type="time"
+              className="border p-2 rounded w-full dark:bg-gray-700 dark:text-white"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+              required
+            />
+          </label>
+          <label className="text-sm font-medium dark:text-gray-300">
+            End Date
+            <input
+              type="date"
+              className="border p-2 rounded w-full dark:bg-gray-700 dark:text-white"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              required
+            />
+          </label>
+          <label className="text-sm font-medium dark:text-gray-300">
+            End Time
+            <input
+              type="time"
+              className="border p-2 rounded w-full dark:bg-gray-700 dark:text-white"
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
+              required
+            />
           </label>
           <div className="flex justify-end gap-2">
             <button

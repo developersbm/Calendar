@@ -1,25 +1,55 @@
 "use client";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import allLocales from "@fullcalendar/core/locales-all";
 import { useAppSelector } from "@/app/redux";
-import { useCreateEventMutation } from "@/state/api";
 import Modal from "@/components/Modal/page";
 import { DateSelectArg, EventClickArg } from "@fullcalendar/core";
+import { useGetAuthUserQuery, useGetUserQuery, useGetEventCalendarQuery } from "@/state/api";
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  cognitoId: string;
+  membershipId: number;
+  calendarId?: number;
+  profilePicture?: string;
+}
 
 const CalendarComponent = () => {
-  // const [currentEvents, setCurrentEvents] = useState([]);
   const [isModalOpen, setModalOpen] = useState(false);
-  const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
-  const [createEvent] = useCreateEventMutation();
   const [selectedDate, setSelectedDate] = useState<DateSelectArg | undefined>(undefined);
+  const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
 
-  // const handleEvents = useCallback((events: any[]) => {
-  //   setCurrentEvents(events);
-  // }, []);
+  const { data: authData } = useGetAuthUserQuery({});
+  const userId = authData?.user?.userId;
+
+  const { data: user, isError: isUserError } = useGetUserQuery(userId ?? "", {
+    skip: !userId,
+  });
+
+  const { data: events, refetch } = useGetEventCalendarQuery(user?.calendarId as number, {
+    skip: !user?.calendarId,
+  });
+
+  const formattedEvents = events
+    ? events.map((event) => ({
+        id: event.id.toString(),
+        title: event.title,
+        start: event.startTime,
+        end: event.endTime,
+        extendedProps: {
+          description: event.description,
+          recurrence: event.recurrence,
+          calendarId: event.calendarId,
+          participants: event.participants,
+        },
+      }))
+    : [];
 
   const handleDateSelect = useCallback((selectInfo: DateSelectArg) => {
     setSelectedDate(selectInfo);
@@ -29,39 +59,46 @@ const CalendarComponent = () => {
   const handleModalSubmit = async ({
     title,
     description,
+    startTime,
+    endTime,
   }: {
     title: string;
     description: string;
+    startTime: string;
+    endTime: string;
   }) => {
-    if (selectedDate) {
-      const calendarApi = selectedDate.view.calendar;
+    if (!user?.calendarId) return;
 
-      const eventToSave = {
-        title,
-        description,
-        startTime: selectedDate.startStr,
-        endTime: selectedDate.endStr,
-        calendarId: 1,
-      };
+    try {
+      const response = await fetch("/api/events", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title,
+          description,
+          startTime,
+          endTime,
+          calendarId: user.calendarId,
+        }),
+      });
 
-      try {
-        const newEvent = await createEvent(eventToSave).unwrap();
-        calendarApi.addEvent({
-          id: newEvent.id.toString(),
-          title: newEvent.title,
-          start: newEvent.startTime,
-          end: newEvent.endTime,
-        });
-      } catch (error) {
-        console.error("Error creating event:", error);
-        alert("Failed to save the event. Please try again.");
+      if (!response.ok) {
+        throw new Error("Failed to create event");
       }
+
+      await response.json();
+      setModalOpen(false);
+      refetch();
+    } catch (error) {
+      console.error(error);
+      alert("Failed to create event. Please try again.");
     }
-    setModalOpen(false);
   };
 
   const handleEventClick = useCallback((clickInfo: EventClickArg) => {
-    if (window.confirm(`Delete ${clickInfo.event.title}`)) {
+    if (window.confirm(`Delete ${clickInfo.event.title}?`)) {
       clickInfo.event.remove();
     }
   }, []);
@@ -72,6 +109,7 @@ const CalendarComponent = () => {
 
   return (
     <div className={calendarClassNames}>
+      {isUserError && <p className="text-red-500">Failed to fetch user information.</p>}
       <FullCalendar
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
         initialView="dayGridMonth"
@@ -82,9 +120,9 @@ const CalendarComponent = () => {
         headerToolbar={{
           left: "prev,next",
           center: "title",
-          right: "today,dayGridMonth,dayGridWeek",
+          right: "today,dayGridMonth,timeGridWeek",
         }}
-        // eventsSet={handleEvents}
+        events={formattedEvents}
         select={handleDateSelect}
         eventClick={handleEventClick}
         eventColor={isDarkMode ? "#4B5563" : "#2563EB"}

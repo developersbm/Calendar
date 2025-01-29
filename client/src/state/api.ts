@@ -14,15 +14,22 @@ import { fetchAuthSession, getCurrentUser } from "aws-amplify/auth";
 export const api = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL,
-    prepareHeaders: async(headers) => {
+    prepareHeaders: async (headers) => {
       const session = await fetchAuthSession();
       const { accessToken } = session.tokens ?? {};
       if (accessToken) {
         headers.set("Authorization", `Bearer ${accessToken}`);
       }
       return headers;
-    }
-  }),
+    },
+    responseHandler: async (response) => {
+      if (response.headers.get("content-type")?.includes("application/json")) {
+        return await response.json();
+      } else {
+        return await response.text();
+      }
+    },
+  }),  
   reducerPath: "api",
   tagTypes: [
     "Memberships",
@@ -68,6 +75,13 @@ export const api = createApi({
       }),
       invalidatesTags: ["Users"],
     }),
+    deleteUser: build.mutation<void, string>({
+      query: (id) => ({
+        url: `user/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Users"],
+    }),
 
     // Groups
     getGroups: build.query<Group[], void>({
@@ -104,10 +118,10 @@ export const api = createApi({
     }),
 
     // Events (CRUD)
-    getEvents: build.query<Event[], void>({
-      query: () => "events",
+    getEventCalendar: build.query<Event[], number>({
+      query: (calendarId) => `events/calendar?calendarId=${calendarId}`,
       providesTags: ["Events"],
-    }),
+    }), 
     createEvent: build.mutation<Event, Partial<Event>>({
       query: (event) => ({
         url: "events",
@@ -165,13 +179,14 @@ export const {
   useGetAuthUserQuery,
   useGetUserQuery,
   useGetUsersQuery,
+  useDeleteUserMutation,
   useCreateUserMutation,
   useGetGroupsQuery,
   useCreateGroupMutation,
   useGetGroupMembersQuery,
   useGetCalendarsQuery,
   useCreateCalendarMutation,
-  useGetEventsQuery,
+  useGetEventCalendarQuery,
   useCreateEventMutation,
   useGetNotificationsQuery,
   useCreateNotificationMutation,

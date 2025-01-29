@@ -56,15 +56,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* Recent Activities */}
-      <section>
-        <h2 className="text-3xl font-bold text-gray-800 dark:text-white">
-          Recent Activities
-        </h2>
-        <p className="mt-2 text-gray-600 dark:text-gray-300">View your latest templates, events, and plans.</p>
-        {/* Add dynamic content here */}
-      </section>
     </div>
   );
 }
