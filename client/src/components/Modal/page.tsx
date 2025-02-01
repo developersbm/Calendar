@@ -28,12 +28,8 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onSubmit, selectedDateRa
     if (selectedDateRange) {
       const { start, end } = selectedDateRange;
   
-      let startDateTime = new Date(start);
-      let endDateTime = new Date(end);
-  
-      console.log("📌 Original Selected Date Range:", start, end);
-      console.log("🕒 Parsed Start DateTime:", startDateTime.toISOString());
-      console.log("🕒 Parsed End DateTime Before Fix:", endDateTime.toISOString());
+      const startDateTime = new Date(start);
+      const endDateTime = new Date(end);
   
       const isSingleDay = startDateTime.toDateString() === endDateTime.toDateString();
 
@@ -47,12 +43,9 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onSubmit, selectedDateRa
       const isFullDayEvent = startTimeFormatted === "00:00" && endTimeFormatted === "00:00";
   
       if (isFullDayEvent) {
-        console.log("🛠 Full-day event detected! Adjusting endDate.");
         endDateTime.setDate(endDateTime.getDate() - 1);
       }
-  
-      console.log("✅ Final Adjusted End DateTime:", endDateTime.toISOString());
-  
+    
       setStartDate(startDateTime.toISOString().split("T")[0]);
       setStartTime(startTimeFormatted || "00:00");
   

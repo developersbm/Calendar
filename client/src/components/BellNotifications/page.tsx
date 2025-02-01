@@ -3,7 +3,7 @@ interface BellModal {
     isOpen: boolean;
     onClose: () => void;
 }
-const Modal: React.FC<BellModal> = ({ isOpen, onClose}) => {
+const BellModal: React.FC<BellModal> = ({ isOpen }) => {
 
     if (!isOpen) return null;
 

@@ -46,10 +46,8 @@ const CalendarComponent = () => {
 const handleDateSelect = useCallback((selectInfo: DateSelectArg) => {
   console.log("Selected Date Info from FullCalendar:", selectInfo);
 
-  let startDateTime = new Date(selectInfo.startStr);
-  let endDateTime = new Date(selectInfo.endStr);
-
-  console.log("Parsed Start DateTime:", startDateTime.toISOString());
+  const startDateTime = new Date(selectInfo.startStr);
+  const endDateTime = new Date(selectInfo.endStr);
 
   const isSingleDay = startDateTime.toISOString().split("T")[0] === endDateTime.toISOString().split("T")[0];
 
@@ -117,19 +115,16 @@ const handleDateSelect = useCallback((selectInfo: DateSelectArg) => {
       console.log("Refetching events...");
       await refetch();
   
-    } catch (error) {
-      console.error("Error creating event:", error);
+    } catch (_error) {
       alert("Failed to create event. Please try again.");
     }
   };
 
   const handleEventClick = useCallback(async (clickInfo: EventClickArg) => {
     if (window.confirm(`Delete event "${clickInfo.event.title}"?`)) {
-      try {
-        const eventId = Number(clickInfo.event.id);
-    
+      try {    
         clickInfo.event.remove();
-      } catch (error) {
+      } catch (_error) {
         alert("Failed to delete event. Please try again.");
       }
     }
