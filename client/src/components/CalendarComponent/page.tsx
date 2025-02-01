@@ -81,54 +81,55 @@ const handleDateSelect = useCallback((selectInfo: DateSelectArg) => {
     startTime: string;
     endTime: string;
   }) => {
-    if (!user?.calendarId) {
-      alert("User does not have an associated calendar.");
-      return;
-    }
+
+  if (!user?.calendarId) {
+    alert("User does not have an associated calendar.");
+    return;
+  }
+    const eventData = {
+    title,
+    description,
+    startTime: new Date(`${startDate}T${startTime}:00`).toISOString(),
+    endTime: new Date(`${endDate}T${endTime}:00`).toISOString(),
+    calendarId: user.calendarId,
+  };      
+
+  console.log("Submitting event:", eventData);
+
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/event`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(eventData),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to create event");
+  }
+
+  console.log("Event created successfully.");
   
-    try {
-      const eventData = {
-        title,
-        description,
-        startTime: new Date(`${startDate}T${startTime}:00`).toISOString(),
-        endTime: new Date(`${endDate}T${endTime}:00`).toISOString(),
-        calendarId: user.calendarId,
-      };      
+  setModalOpen(false);
   
-      console.log("Submitting event:", eventData);
-  
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/event`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(eventData),
-      });
-  
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to create event");
-      }
-  
-      console.log("Event created successfully.");
-      
-      setModalOpen(false);
-      
-      console.log("Refetching events...");
-      await refetch();
-  
-    } catch (_error) {
-      alert("Failed to create event. Please try again.");
-    }
+  console.log("Refetching events...");
+  await refetch();
   };
 
   const handleEventClick = useCallback(async (clickInfo: EventClickArg) => {
     if (window.confirm(`Delete event "${clickInfo.event.title}"?`)) {
-      try {    
+      try {
+        console.log("Deleting event:", clickInfo.event.id);
+
+        await deleteEvent(Number(clickInfo.event.id)).unwrap();
+        console.log("Event deleted successfully");
+
         clickInfo.event.remove();
-      } catch (_error) {
+      } catch (error) {
+        console.error("Failed to delete event:", error);
         alert("Failed to delete event. Please try again.");
       }
     }
-  }, [deleteEvent]);  
+  }, [deleteEvent]);
 
   const calendarClassNames = `w-[200vh] h-[80vh] ${
     isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"

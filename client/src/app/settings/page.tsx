@@ -19,7 +19,6 @@ const SettingsPage = () => {
   const isSidebarCollapsed = useAppSelector(
     (state) => state.global.isSidebarCollapsed
   );
-  const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
 
   const handleDeleteUser = async () => {
     if (!userId) {
