@@ -23,12 +23,15 @@ export const api = createApi({
       return headers;
     },
     responseHandler: async (response) => {
-      if (response.headers.get("content-type")?.includes("application/json")) {
+      const contentType = response.headers.get("content-type");
+    
+      if (contentType?.includes("application/json")) {
         return await response.json();
       } else {
-        return await response.text();
+        const errorText = await response.text();
+        throw new Error(`Unexpected response: ${errorText}`);
       }
-    },
+    }
   }),  
   reducerPath: "api",
   tagTypes: [
@@ -119,17 +122,25 @@ export const api = createApi({
 
     // Events (CRUD)
     getEventCalendar: build.query<Event[], number>({
-      query: (calendarId) => `events/calendar?calendarId=${calendarId}`,
+      query: (calendarId) => `${process.env.NEXT_PUBLIC_API_BASE_URL}/event/calendar?calendarId=${calendarId}`,
       providesTags: ["Events"],
-    }), 
+    }),       
     createEvent: build.mutation<Event, Partial<Event>>({
       query: (event) => ({
-        url: "events",
+        url: "event",
         method: "POST",
         body: event,
       }),
       invalidatesTags: ["Events"],
     }),
+    deleteEvent: build.mutation<void, number>({
+      query: (id) => ({
+        url: `${process.env.NEXT_PUBLIC_API_BASE_URL}/event/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Events"],
+    }),
+    
 
     // Notifications
     getNotifications: build.query<Notification[], void>({
@@ -187,6 +198,7 @@ export const {
   useGetCalendarsQuery,
   useCreateCalendarMutation,
   useGetEventCalendarQuery,
+  useDeleteEventMutation,
   useCreateEventMutation,
   useGetNotificationsQuery,
   useCreateNotificationMutation,

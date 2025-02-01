@@ -47,22 +47,32 @@ export const getEventCalendar = async (req: Request, res: Response): Promise<voi
   }
 
   try {
+    console.log(`Fetching events for calendarId: ${calendarId}`);
+
     const events = await prisma.event.findMany({
       where: { calendarId: Number(calendarId) },
-      include: {
-        participants: true,
-        calendar: true,
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        startTime: true,
+        endTime: true,
+        calendarId: true,
       },
     });
+
+    console.log("Events found:", events);
+    
     res.status(200).json(events);
   } catch (error: any) {
+    console.error("Error retrieving events:", error);
     res.status(500).json({ message: `Error retrieving events: ${error.message}` });
   }
 };
 
 // Create an event
 export const postEvent = async (req: Request, res: Response): Promise<void> => {
-  const { title, description, startTime, endTime, recurrence, endRecurrence, calendarId } = req.body;
+  const { title, description, startTime, endTime, calendarId } = req.body;
 
   if (!calendarId) {
     res.status(400).json({ message: "Calendar ID is required." });
@@ -70,19 +80,62 @@ export const postEvent = async (req: Request, res: Response): Promise<void> => {
   }
 
   try {
+    console.log("Received event data:", req.body);
+
+    const calendar = await prisma.calendar.findUnique({
+      where: { id: Number(calendarId) },
+    });
+
+    if (!calendar) {
+      res.status(400).json({ message: "Invalid calendar ID." });
+      return;
+    }
+
     const newEvent = await prisma.event.create({
       data: {
         title,
         description,
         startTime: new Date(startTime),
         endTime: new Date(endTime),
-        recurrence: recurrence || null,
-        endRecurrence: endRecurrence ? new Date(endRecurrence) : null,
         calendarId,
       },
     });
-    res.status(201).json({ message: "Event created successfully", newEvent });
+
+    res.status(201).json({ message: "Event created successfully", event: newEvent });
   } catch (error: any) {
+    console.error("Database error:", error);
     res.status(500).json({ message: `Error creating event: ${error.message}` });
+  }
+};
+
+// Delete Event
+export const deleteEvent = async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
+
+  if (!id) {
+    res.status(400).json({ message: "Event ID is required." });
+    return;
+  }
+
+  try {
+    console.log(`Deleting event with ID: ${id}`);
+
+    const eventExists = await prisma.event.findUnique({
+      where: { id: Number(id) },
+    });
+
+    if (!eventExists) {
+      res.status(404).json({ message: "Event not found." });
+      return;
+    }
+
+    const deletedEvent = await prisma.event.delete({
+      where: { id: Number(id) },
+    });
+
+    res.status(200).json({ message: "Event deleted successfully", deletedEvent });
+  } catch (error: any) {
+    console.error("Error deleting event:", error);
+    res.status(500).json({ message: `Error deleting event: ${error.message}` });
   }
 };

@@ -27,12 +27,41 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onSubmit, selectedDateRa
   React.useEffect(() => {
     if (selectedDateRange) {
       const { start, end } = selectedDateRange;
-      setStartDate(start.split("T")[0]);
-      setStartTime(start.split("T")[1]?.slice(0, 5) || "");
-      setEndDate(end.split("T")[0]);
-      setEndTime(end.split("T")[1]?.slice(0, 5) || "");
+  
+      let startDateTime = new Date(start);
+      let endDateTime = new Date(end);
+  
+      console.log("📌 Original Selected Date Range:", start, end);
+      console.log("🕒 Parsed Start DateTime:", startDateTime.toISOString());
+      console.log("🕒 Parsed End DateTime Before Fix:", endDateTime.toISOString());
+  
+      const isSingleDay = startDateTime.toDateString() === endDateTime.toDateString();
+
+      if (isSingleDay) {
+        endDateTime.setDate(endDateTime.getDate() - 1);
+      }
+  
+      const startTimeFormatted = startDateTime.toISOString().split("T")[1]?.slice(0, 5);
+      const endTimeFormatted = endDateTime.toISOString().split("T")[1]?.slice(0, 5);
+  
+      const isFullDayEvent = startTimeFormatted === "00:00" && endTimeFormatted === "00:00";
+  
+      if (isFullDayEvent) {
+        console.log("🛠 Full-day event detected! Adjusting endDate.");
+        endDateTime.setDate(endDateTime.getDate() - 1);
+      }
+  
+      console.log("✅ Final Adjusted End DateTime:", endDateTime.toISOString());
+  
+      setStartDate(startDateTime.toISOString().split("T")[0]);
+      setStartTime(startTimeFormatted || "00:00");
+  
+      setEndDate(endDateTime.toISOString().split("T")[0]);
+      setEndTime(endTimeFormatted || "23:59");
     }
   }, [selectedDateRange]);
+  
+  
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();

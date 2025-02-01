@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Menu, Moon, Settings, Sun, User } from "lucide-react";
+import { Menu, Moon, Settings, Sun, User, Bell } from "lucide-react";
 import Link from "next/link";
 import { useAppDispatch, useAppSelector } from "@/app/redux";
 import { setIsDarkMode, setIsSidebarCollapsed } from "@/state";
@@ -33,7 +33,7 @@ const Navbar = () => {
   const { data: user } = useGetUserQuery(userId ?? "", {
     skip: !userId,
   });
-
+  
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -54,6 +54,16 @@ const Navbar = () => {
       </div>
     {/* Navbar User Info */}
     <div className="flex items-center">
+    <button
+        onClick={() => dispatch(setIsDarkMode(!isDarkMode))}
+        className={
+          isDarkMode
+            ? `rounded p-2 dark:hover:bg-gray-700`
+            : `rounded p-2 hover:bg-gray-100`
+        }
+      >
+      <Bell className="h-6 w-6 cursor-pointer dark:text-white" />
+      </button>
       <button
         onClick={() => dispatch(setIsDarkMode(!isDarkMode))}
         className={
@@ -99,7 +109,7 @@ const Navbar = () => {
           <Link
             href={"/auth"}
             onClick={handleSignOut}
-            className="ml-4 rounded p-2 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="ml-2 rounded p-2 text-red-400 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             Sign Out
           </Link>
@@ -111,13 +121,7 @@ const Navbar = () => {
             href="/auth"
             className="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600"
           >
-            Sign In
-          </Link>
-          <Link
-            href="/auth"
-            className="px-4 py-2 rounded border border-blue-500 text-blue-500 hover:bg-blue-100"
-          >
-            Create an Account
+            Sign Up / Sign In
           </Link>
         </div>
       )}
