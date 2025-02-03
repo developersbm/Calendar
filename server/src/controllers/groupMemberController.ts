@@ -28,15 +28,34 @@ export const getMembersByGroup = async (req: Request, res: Response): Promise<vo
 };
 
 // Add a member to a group
-export const addMemberToGroup = async (req: Request, res: Response): Promise<void> => {
-    const { groupId, userId, role, status } = req.body;
+export const addMember = async (req: Request, res: Response): Promise<void> => {
+    const { groupId, email } = req.body;
+  
+    if (!groupId || !email) {
+      res.status(400).json({ message: "Group ID and email are required." });
+      return;
+    }
+  
     try {
-        const member = await prisma.groupMember.create({
-            data: { groupId, userId, role, status },
-        });
-        res.status(201).json({ message: "Member added successfully", member });
+      const user = await prisma.user.findUnique({ where: { email } });
+      if (!user) {
+        res.status(404).json({ message: "User not found." });
+        return;
+      }
+  
+      await prisma.groupMember.create({
+        data: {
+          groupId: Number(groupId),
+          userId: user.id,
+          role: "Member",
+          status: "Active",
+        },
+      });
+  
+      res.status(200).json({ message: "Member added successfully!" });
     } catch (error: any) {
-        res.status(500).json({ message: `Error adding member: ${error.message}` });
+      console.error("Error adding member:", error);
+      res.status(500).json({ message: `Error adding member: ${error.message}` });
     }
 };
 

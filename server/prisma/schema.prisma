@@ -25,6 +25,7 @@ model User {
   name             String
   email            String    @unique
   cognitoId        String    @unique
+  friendId         String    @unique
   membershipId     Int
   membership       Membership @relation(fields: [membershipId], references: [id])
   calendarId       Int?
@@ -69,19 +70,12 @@ model GroupMember {
 
 model Calendar {
   id          Int       @id @default(autoincrement())
-  ownerId     Int
+  ownerId     Int       // Missing when creating a calendar
   ownerType   String    // User or Group
   description String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   events      Event[]
-  
-  // Composite unique constraint for ownerId and ownerType
-  @@unique([ownerId, ownerType])
-
-  // Optional: Composite index for faster filtering by ownerId and ownerType
-  @@index([ownerId, ownerType])
-  @@map("calendars")
   User User[]
   Group Group[]
 }

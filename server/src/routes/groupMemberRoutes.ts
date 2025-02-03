@@ -1,11 +1,11 @@
 import { Router } from "express";
-import { addMemberToGroup, getAllMembers, getMembersByGroup, removeMemberFromGroup, updateMemberRoleOrStatus } from "../controllers/groupMemberController";
+import { addMember, getAllMembers, getMembersByGroup, removeMemberFromGroup, updateMemberRoleOrStatus } from "../controllers/groupMemberController";
 
 const router = Router();
 
 router.get("/", getAllMembers);
 router.get("/", getMembersByGroup);
-router.get("/", addMemberToGroup);
+router.post("/add-member", addMember);
 router.get("/", updateMemberRoleOrStatus);
 router.get("/", removeMemberFromGroup);
 

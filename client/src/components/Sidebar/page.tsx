@@ -10,7 +10,7 @@ import {
   LucideIcon,
   Users,
   X,
-  CirclePlus,
+  Search,
   LogOut,
 } from "lucide-react";
 import Image from "next/image";
@@ -94,7 +94,6 @@ const Sidebar = () => {
             <Image src={profile} alt="" width={40} height={40} className="rounded-full" />
             <div>
               <h3 className="text-md font-bold tracking-wide dark:text-gray-200">Welcome, {user.name}!</h3>
-              <p className="text-xs text-gray-500">Email: {user.email}</p>
             </div>
           </div>
         ) : (
@@ -132,8 +131,8 @@ const Sidebar = () => {
               href="/groups"
               className="flex w-full items-center gap-3 px-8 py-3 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
             >
-              <CirclePlus className="h-6 w-6" />
-              <span className="font-medium">Add Groups</span>
+              <Search className="h-6 w-6" />
+              <span className="font-medium">View Groups</span>
             </Link>
           </div>
         )}
@@ -160,8 +159,8 @@ const Sidebar = () => {
               href="/add-template"
               className="flex w-full items-center gap-3 px-8 py-3 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
             >
-              <CirclePlus className="h-6 w-6" />
-              <span className="font-medium">Add Template</span>
+              <Search className="h-6 w-6" />
+              <span className="font-medium">View Template</span>
             </Link>
           </div>
         )}

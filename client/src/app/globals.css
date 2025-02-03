@@ -24,3 +24,22 @@ body {
   width: 0px;
   height: 0px;
 }
+
+/* Calendar */
+.fc .fc-toolbar button {
+  font-size: 1rem;
+  padding: 8px 12px;
+}
+
+/* Smaller buttons for mobile */
+@media (max-width: 640px) {
+  .fc .fc-toolbar button {
+    font-size: 0.75rem !important;
+    padding: 4px 6px !important;
+    min-height: 28px !important;
+  }
+
+  .fc .fc-toolbar-title {
+    font-size: 1rem !important;
+  }
+}

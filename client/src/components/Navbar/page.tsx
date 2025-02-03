@@ -54,7 +54,7 @@ const Navbar = () => {
       </div>
     {/* Navbar User Info */}
     <div className="flex items-center">
-    <button
+    {/* <button
         onClick={() => dispatch(setIsDarkMode(!isDarkMode))}
         className={
           isDarkMode
@@ -63,7 +63,7 @@ const Navbar = () => {
         }
       >
       <Bell className="h-6 w-6 cursor-pointer dark:text-white" />
-      </button>
+      </button> */}
       <button
         onClick={() => dispatch(setIsDarkMode(!isDarkMode))}
         className={

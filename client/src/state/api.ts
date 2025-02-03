@@ -50,17 +50,17 @@ export const api = createApi({
 
     // Users
     getAuthUser: build.query({
-      queryFn: async (_, _queryApi, _extraoptions, fetchWithBQ) => {
-          const user = await getCurrentUser();
-          const session = await fetchAuthSession();
-          if (!session) throw new Error("No session found");
-          const { userSub } = session;
+      queryFn: async (_, _queryApi, _extraOptions, fetchWithBQ) => {
+        const user = await getCurrentUser();
+        const session = await fetchAuthSession();
+        if (!session) throw new Error("No session found");
+        const { userSub } = session;
 
-          const userDetailsResponse = await fetchWithBQ(`users/${userSub}`);
-          const userDetails = userDetailsResponse.data as User;
+        const userDetailsResponse = await fetchWithBQ(`users/${userSub}`);
+        const userDetails = userDetailsResponse.data as User;
 
-          return { data: { user, userSub, userDetails } };
-      }
+        return { data: { user, userSub, userDetails } };
+      },
     }),
     getUser: build.query<User, string>({
       query: (id) => `user/${id}`,
@@ -91,13 +91,25 @@ export const api = createApi({
       query: () => "group",
       providesTags: ["Groups"],
     }),
-    createGroup: build.mutation<Group, Partial<Group>>({
-      query: (group) => ({
+    createGroup: build.mutation<Group, { title: string; description: string; userId: number }>({
+      query: ({ title, description, userId }) => ({
         url: "group",
         method: "POST",
-        body: group,
+        body: {
+          title,
+          description,
+          userId: Number(userId),
+        },
       }),
       invalidatesTags: ["Groups"],
+    }),
+    addMember: build.mutation<void, { groupId: number; email: string }>({
+      query: ({ groupId, email }) => ({
+        url: `group/add-member`,
+        method: "POST",
+        body: { groupId, email },
+      }),
+      invalidatesTags: ["GroupMembers"],
     }),
 
     // Get all group members
@@ -195,6 +207,7 @@ export const {
   useGetGroupsQuery,
   useCreateGroupMutation,
   useGetGroupMembersQuery,
+  useAddMemberMutation,
   useGetCalendarsQuery,
   useCreateCalendarMutation,
   useGetEventCalendarQuery,

@@ -131,7 +131,7 @@ const handleDateSelect = useCallback((selectInfo: DateSelectArg) => {
     }
   }, [deleteEvent]);
 
-  const calendarClassNames = `w-[200vh] h-[80vh] ${
+  const calendarClassNames = `w-[150vh] h-[60vh] ${
     isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
   }`;
 
@@ -146,19 +146,19 @@ const handleDateSelect = useCallback((selectInfo: DateSelectArg) => {
         locales={allLocales}
         locale="en"
         headerToolbar={{
-          left: "prev,next",
-          center: "title",
-          right: "today,dayGridMonth,timeGridWeek,timeGridDay",
+          left: "title",
+          right: "prev,next,today,dayGridMonth,timeGridWeek,timeGridDay",
         }}
+        titleFormat={{ year: "numeric", month: "long" }}
         events={formattedEvents}
         select={handleDateSelect}
         eventClick={handleEventClick}
         eventColor={isDarkMode ? "#4B5563" : "#2563EB"}
         themeSystem="bootstrap5"
 
-        longPressDelay={0}
-        eventLongPressDelay={0}
-        selectLongPressDelay={0}
+        longPressDelay={150}
+        eventLongPressDelay={200}
+        selectLongPressDelay={150}
       />
       <Modal
         isOpen={isModalOpen}

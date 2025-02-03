@@ -47,7 +47,7 @@ const SettingsPage = () => {
         await cognitoClient.send(command);
         console.log("User deleted from Cognito");
 
-        const response = await fetch(`/api/users/${userId}`, {
+        const response = await fetch(`/users/${userId}`, {
           method: "DELETE",
         });
 
