@@ -93,7 +93,7 @@ export const api = createApi({
     }),
     createGroup: build.mutation<Group, { title: string; description: string; userId: number }>({
       query: ({ title, description, userId }) => ({
-        url: "group",
+        url: "/group",
         method: "POST",
         body: {
           title,
@@ -105,7 +105,7 @@ export const api = createApi({
     }),
     addMember: build.mutation<void, { groupId: number; email: string }>({
       query: ({ groupId, email }) => ({
-        url: `group/add-member`,
+        url: `groupMember/add-member`,
         method: "POST",
         body: { groupId, email },
       }),

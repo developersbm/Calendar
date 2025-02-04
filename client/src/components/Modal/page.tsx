@@ -31,29 +31,29 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onSubmit, selectedDateRa
       const startDateTime = new Date(start);
       const endDateTime = new Date(end);
   
+      console.log("Before Adjustment: ", { startDateTime, endDateTime });
+  
+      const startTimeFormatted = startDateTime.toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" });
+      const endTimeFormatted = endDateTime.toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" });
+  
       const isSingleDay = startDateTime.toDateString() === endDateTime.toDateString();
-
-      if (isSingleDay) {
-        endDateTime.setDate(endDateTime.getDate() - 1);
-      }
-  
-      const startTimeFormatted = startDateTime.toISOString().split("T")[1]?.slice(0, 5);
-      const endTimeFormatted = endDateTime.toISOString().split("T")[1]?.slice(0, 5);
-  
       const isFullDayEvent = startTimeFormatted === "00:00" && endTimeFormatted === "00:00";
   
+      // Only adjust the date for full-day events
+      let adjustedEndDateTime = new Date(endDateTime);
       if (isFullDayEvent) {
-        endDateTime.setDate(endDateTime.getDate() - 1);
+        adjustedEndDateTime.setHours(23, 59, 59, 999);
       }
-    
+  
+      console.log("After Adjustment: ", { startDateTime, adjustedEndDateTime });
+  
       setStartDate(startDateTime.toISOString().split("T")[0]);
-      setStartTime(startTimeFormatted || "00:00");
+      setStartTime(startTimeFormatted);
   
-      setEndDate(endDateTime.toISOString().split("T")[0]);
-      setEndTime(endTimeFormatted || "23:59");
+      setEndDate(adjustedEndDateTime.toISOString().split("T")[0]);
+      setEndTime(endTimeFormatted);
     }
-  }, [selectedDateRange]);
-  
+  }, [selectedDateRange]);  
   
 
   const handleFormSubmit = (e: React.FormEvent) => {

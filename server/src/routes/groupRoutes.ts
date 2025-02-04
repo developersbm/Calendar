@@ -5,6 +5,6 @@ const router = Router();
 
 router.get("/", getGroups);
 router.get("/", getGroup);
-router.get("/", postGroup);
+router.post("/", postGroup);
 
 export default router;

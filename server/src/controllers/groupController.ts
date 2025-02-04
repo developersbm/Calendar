@@ -46,13 +46,13 @@ export const getGroup = async (req: Request, res: Response): Promise<void> => {
 export const postGroup = async (req: Request, res: Response): Promise<void> => {
   let { title, description, iconUrl, userId } = req.body;
 
-  if (!title.trim()) {
+  if (!title?.trim()) {
     res.status(400).json({ message: "Group title is required." });
     return;
   }
 
   try {
-    userId = Number(userId); // Convert userId to a number
+    userId = Number(userId);
     if (isNaN(userId)) {
       res.status(400).json({ message: "Invalid userId. Must be a number." });
       return;
@@ -68,23 +68,34 @@ export const postGroup = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Step 1: Create a new calendar for the group
-    const newCalendar = await prisma.calendar.create({
-      data: {
-        ownerId: user.id,
-        ownerType: "Group",
-        description: `Calendar for ${title}`,
-      },
-    });
+    // Set default icon URL if not provided
+    if (!iconUrl) {
+      iconUrl = "NULL";
+    }
 
-    // Step 2: Create the group and link it to the new calendar
+    // Create the group **and the calendar in the same transaction**
     const newGroup = await prisma.group.create({
       data: {
         title,
         description,
         iconUrl,
-        calendarId: newCalendar.id,
+        calendar: {
+          create: {
+            ownerId: 0, // Temporary value; will be updated immediately after
+            ownerType: "Group",
+            description: `Calendar for ${title}`,
+          },
+        },
       },
+      include: {
+        calendar: true, // Fetch the created calendar
+      },
+    });
+
+    // Update the calendar with the correct group ownerId
+    const updatedCalendar = await prisma.calendar.update({
+      where: { id: newGroup.calendar.id },
+      data: { ownerId: newGroup.id }, // Set the actual group ID
     });
 
     // Step 3: Add the user as a group admin
@@ -97,7 +108,11 @@ export const postGroup = async (req: Request, res: Response): Promise<void> => {
       },
     });
 
-    res.status(201).json({ message: "Group created successfully", newGroup });
+    // Return updated group with linked calendar
+    res.status(201).json({ 
+      message: "Group created successfully", 
+      group: { ...newGroup, calendar: updatedCalendar } 
+    });
   } catch (error: any) {
     console.error("Error creating group:", error);
     res.status(500).json({ message: `Error creating group: ${error.message}` });

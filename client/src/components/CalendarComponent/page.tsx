@@ -42,29 +42,20 @@ const CalendarComponent = () => {
     }))
   : [];
 
-  console.log("Formatted events for FullCalendar:", formattedEvents);
-const handleDateSelect = useCallback((selectInfo: DateSelectArg) => {
-  console.log("Selected Date Info from FullCalendar:", selectInfo);
+  const handleDateSelect = useCallback((selectInfo: DateSelectArg) => {
+    console.log("Selected Date Info from FullCalendar:", selectInfo);
+  
+    const startDateTime = new Date(selectInfo.startStr);
+    const endDateTime = new Date(selectInfo.endStr);
 
-  const startDateTime = new Date(selectInfo.startStr);
-  const endDateTime = new Date(selectInfo.endStr);
-
-  const isSingleDay = startDateTime.toISOString().split("T")[0] === endDateTime.toISOString().split("T")[0];
-
-  if (isSingleDay) {
-    endDateTime.setHours(23, 59);
-  }
-
-  console.log("Final Adjusted End DateTime:", endDateTime.toISOString());
-
-  setSelectedDate({
-    ...selectInfo,
-    startStr: startDateTime.toISOString(),
-    endStr: endDateTime.toISOString(),
-  });
-
-  setModalOpen(true);
-}, []);
+    setSelectedDate({
+      ...selectInfo,
+      startStr: startDateTime.toISOString(),
+      endStr: endDateTime.toISOString(),
+    });
+  
+    setModalOpen(true);
+  }, []);  
 
   const handleModalSubmit = async ({
     title,

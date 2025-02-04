@@ -1,6 +1,6 @@
 "use client";
 
-import { useGetAuthUserQuery, useGetUserQuery, useGetUsersQuery, useGetGroupsQuery, useGetGroupMembersQuery, useAddMemberMutation } from "@/state/api";
+import { useGetAuthUserQuery, useGetUserQuery, useGetUsersQuery, useGetGroupsQuery, useGetGroupMembersQuery, useAddMemberMutation, useCreateGroupMutation } from "@/state/api";
 import Image from "next/image";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import React, { useState } from "react";
@@ -8,7 +8,7 @@ import GroupModal from "@/components/GroupModal/page";
 
 const GroupsPage = () => {
   const { data: users } = useGetUsersQuery();
-  const { data: groups } = useGetGroupsQuery();
+  const { data: groups, refetch } = useGetGroupsQuery();
   const { data: groupMembers } = useGetGroupMembersQuery();
   
   const { data: authData } = useGetAuthUserQuery({});
@@ -29,6 +29,7 @@ const GroupsPage = () => {
   const [email, setEmail] = useState("");
 
   const [addMember] = useAddMemberMutation();
+  const [createGroup] = useCreateGroupMutation();
 
   const toggleGroup = (groupId: number) => {
     setExpandedGroups((prev) => ({
@@ -52,6 +53,23 @@ const GroupsPage = () => {
     } catch (error) {
       console.error("Error adding member:", error);
       alert("Failed to add member.");
+    }
+  };
+
+  const handleCreateGroup = async (title: string, description: string) => {
+    if (!userId) {
+      alert("User is not authenticated.");
+      return;
+    }
+
+    try {
+      await createGroup({ title, description, userId: Number(userId) }).unwrap();
+      alert("Group created successfully!");
+      setIsModalOpen(false);
+      refetch(); // Refresh groups list
+    } catch (error) {
+      console.error("Error creating group:", error);
+      alert("Failed to create group.");
     }
   };
 
@@ -159,7 +177,7 @@ const GroupsPage = () => {
         })
       )}
 
-      <GroupModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={() => {}} />
+      <GroupModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={handleCreateGroup} />
     </div>
   );
 };
