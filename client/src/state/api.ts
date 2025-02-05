@@ -103,11 +103,27 @@ export const api = createApi({
       }),
       invalidatesTags: ["Groups"],
     }),
+    deleteGroup: build.mutation<void, number>({
+      query: (groupId) => ({
+        url: `group/${groupId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Groups"],
+    }),
+    
+    // Add & Remove Members
     addMember: build.mutation<void, { groupId: number; email: string }>({
       query: ({ groupId, email }) => ({
         url: `groupMember/add-member`,
         method: "POST",
         body: { groupId, email },
+      }),
+      invalidatesTags: ["GroupMembers"],
+    }),
+    removeMember: build.mutation<void, { groupId: number; memberId: number }>({
+      query: ({ groupId, memberId }) => ({
+        url: `groupMember/${groupId}/${memberId}`,
+        method: "DELETE",
       }),
       invalidatesTags: ["GroupMembers"],
     }),
@@ -204,19 +220,28 @@ export const {
   useGetUsersQuery,
   useDeleteUserMutation,
   useCreateUserMutation,
+
   useGetGroupsQuery,
   useCreateGroupMutation,
   useGetGroupMembersQuery,
+  useDeleteGroupMutation,
+
   useAddMemberMutation,
+  useRemoveMemberMutation,
+
   useGetCalendarsQuery,
   useCreateCalendarMutation,
+
   useGetEventCalendarQuery,
   useDeleteEventMutation,
   useCreateEventMutation,
+
   useGetNotificationsQuery,
   useCreateNotificationMutation,
+
   useGetTemplatesQuery,
   useCreateTemplateMutation,
+
   useGetSavingPlansQuery,
   useCreateSavingPlanMutation,
 } = api;

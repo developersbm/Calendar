@@ -7,6 +7,6 @@ router.get("/", getAllMembers);
 router.get("/", getMembersByGroup);
 router.post("/add-member", addMember);
 router.get("/", updateMemberRoleOrStatus);
-router.get("/", removeMemberFromGroup);
+router.delete("/:groupId/:memberId", removeMemberFromGroup);
 
 export default router;

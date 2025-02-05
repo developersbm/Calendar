@@ -118,3 +118,22 @@ export const postGroup = async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({ message: `Error creating group: ${error.message}` });
   }
 };
+
+// Delete Group
+export const deleteGroup = async (req: Request, res: Response): Promise<void> => {
+  const { groupId } = req.params;
+  try {
+    const group = await prisma.group.findUnique({ where: { id: Number(groupId) } });
+    if (!group) {
+      res.status(404).json({ message: "Group not found." });
+      return;
+    }
+
+    await prisma.groupMember.deleteMany({ where: { groupId: Number(groupId) } });
+    await prisma.group.delete({ where: { id: Number(groupId) } });
+
+    res.json({ message: "Group deleted successfully." });
+  } catch (error : any) {
+    res.status(500).json({ message: `Error deleting group: ${error.message}` });
+  }
+};

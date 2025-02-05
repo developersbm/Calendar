@@ -68,6 +68,12 @@ const Sidebar = () => {
     }
   };
 
+  const slugify = (title: string) =>
+    title
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^\w-]+/g, "");
+  
   return (
     <div className={sidebarClassNames}>
       <div className="flex h-[100%] w-full flex-col justify-start">
@@ -124,7 +130,7 @@ const Sidebar = () => {
                 key={group?.id}
                 icon={Users}
                 label={group?.title || "Unnamed Group"}
-                href={`/groups`}
+                href={`/group-calendar/${group?.id}`}
               />
             ))}
             <Link

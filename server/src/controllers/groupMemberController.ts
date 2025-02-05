@@ -76,13 +76,22 @@ export const updateMemberRoleOrStatus = async (req: Request, res: Response): Pro
 
 // Remove a member from a group
 export const removeMemberFromGroup = async (req: Request, res: Response): Promise<void> => {
-    const { groupId, userId } = req.params;
+    const { groupId, memberId } = req.params;
     try {
-        await prisma.groupMember.delete({
-            where: { groupId_userId: { groupId: Number(groupId), userId: Number(userId) } },
-        });
-        res.json({ message: "Member removed successfully" });
-    } catch (error: any) {
-        res.status(500).json({ message: `Error removing member: ${error.message}` });
+      const member = await prisma.groupMember.findUnique({
+        where: { groupId_userId: { groupId: Number(groupId), userId: Number(memberId) } },
+      });
+      if (!member) {
+        res.status(404).json({ message: "Member not found in this group." });
+        return;
+      }
+  
+      await prisma.groupMember.delete({
+        where: { groupId_userId: { groupId: Number(groupId), userId: Number(memberId) } },
+      });
+  
+      res.json({ message: "Member removed successfully." });
+    } catch (error : any) {
+      res.status(500).json({ message: `Error removing member: ${error.message}` });
     }
-};
+  };
