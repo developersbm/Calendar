@@ -68,12 +68,6 @@ const Sidebar = () => {
     }
   };
 
-  const slugify = (title: string) =>
-    title
-      .toLowerCase()
-      .replace(/\s+/g, "-")
-      .replace(/[^\w-]+/g, "");
-  
   return (
     <div className={sidebarClassNames}>
       <div className="flex h-[100%] w-full flex-col justify-start">
@@ -114,7 +108,7 @@ const Sidebar = () => {
           <SidebarLink icon={Briefcase} label="Calendar" href="/calendar" />
           <SidebarLink icon={Users} label="Saving Plans" href="/savingPlans" />
         </nav>
-
+        
         {/* GROUPS */}
         <button
           onClick={() => setShowGroups((prev) => !prev)}

@@ -4,7 +4,7 @@ import { addMember, getAllMembers, getMembersByGroup, removeMemberFromGroup, upd
 const router = Router();
 
 router.get("/", getAllMembers);
-router.get("/", getMembersByGroup);
+router.get("/:groupId/members", getMembersByGroup);
 router.post("/add-member", addMember);
 router.get("/", updateMemberRoleOrStatus);
 router.delete("/:groupId/:memberId", removeMemberFromGroup);

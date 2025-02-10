@@ -68,15 +68,15 @@ const GroupsPage = () => {
 
     try {
       await createGroup({ title, description, userId: Number(userId) }).unwrap();
-      alert("Group created successfully!");
       setIsModalOpen(false);
       refetch(); // Refresh groups list
-    } catch (error) {
+    } catch (error) {4
       console.error("Error creating group:", error);
       alert("Failed to create group.");
     }
   };
 
+  // DELETE THE CALENDAR FROM THE GROUP AS WELL
   const handleDeleteGroup = async (groupId: number) => {
     if (!confirm("Are you sure you want to delete this group?")) return;
     try {

@@ -5,34 +5,41 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import allLocales from "@fullcalendar/core/locales-all";
+import { EventResizeDoneArg } from "@fullcalendar/interaction";
 import { useAppSelector } from "@/app/redux";
 import Modal from "@/components/Modal/page";
-import { DateSelectArg, EventClickArg } from "@fullcalendar/core";
-import { useGetAuthUserQuery, useGetUserQuery, useGetEventCalendarQuery, useDeleteEventMutation } from "@/state/api";
+import { DateSelectArg, EventClickArg, EventDropArg } from "@fullcalendar/core";
+import { 
+  useGetAuthUserQuery, 
+  useGetUserQuery, 
+  useGetEventCalendarQuery, 
+  useDeleteEventMutation, 
+  useUpdateEventMutation 
+} from "@/state/api";
 
 const CalendarComponent = () => {
   const [isModalOpen, setModalOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<EventClickArg | null>(null);
   const [selectedDate, setSelectedDate] = useState<DateSelectArg | undefined>(undefined);
+  
   const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
-  const [deleteEvent]  = useDeleteEventMutation();
+  
+  const [deleteEvent] = useDeleteEventMutation();
+  const [updateEvent] = useUpdateEventMutation();
 
   const { data: authData } = useGetAuthUserQuery({});
   const userId = authData?.user?.userId;
 
-  const { data: user, isError: isUserError } = useGetUserQuery(userId ?? "", {
-    skip: !userId,
-  });
+  const { data: user, isError: isUserError } = useGetUserQuery(userId ?? "", { skip: !userId });
 
-  const { data: events, refetch } = useGetEventCalendarQuery(user?.calendarId as number, {
-    skip: !user?.calendarId,
-  });  
+  const { data: events, refetch } = useGetEventCalendarQuery(user?.calendarId as number, { skip: !user?.calendarId });
 
   const formattedEvents = events
   ? events.map((event) => ({
       id: event.id.toString(),
       title: event.title,
-      start: new Date(event.startTime).toISOString(),
-      end: new Date(event.endTime).toISOString(),
+      start: event.startTime ? new Date(event.startTime).toISOString() : new Date().toISOString(),
+      end: event.endTime ? new Date(event.endTime).toISOString() : new Date().toISOString(),
       extendedProps: {
         description: event.description,
         recurrence: event.recurrence,
@@ -44,7 +51,7 @@ const CalendarComponent = () => {
 
   const handleDateSelect = useCallback((selectInfo: DateSelectArg) => {
     console.log("Selected Date Info from FullCalendar:", selectInfo);
-  
+
     const startDateTime = new Date(selectInfo.startStr);
     const endDateTime = new Date(selectInfo.endStr);
 
@@ -53,9 +60,61 @@ const CalendarComponent = () => {
       startStr: startDateTime.toISOString(),
       endStr: endDateTime.toISOString(),
     });
-  
+
+    setSelectedEvent(null); // Reset selected event
     setModalOpen(true);
-  }, []);  
+  }, []);
+
+  const handleEventDrop = useCallback(async (dropInfo: EventDropArg) => {
+    const { event } = dropInfo;
+  
+    if (!event.start) {
+      console.error("Event start date is null, cannot update event.");
+      return;
+    }
+  
+    const updatedEvent = {
+      id: Number(event.id),
+      startTime: event.start.toISOString(),
+      endTime: event.end ? event.end.toISOString() : event.start.toISOString(),
+    };
+  
+    console.log("Updating event via drag-and-drop:", updatedEvent);
+  
+    try {
+      await updateEvent(updatedEvent).unwrap();
+      console.log("Event updated successfully");
+    } catch (error) {
+      console.error("Failed to update event:", error);
+      alert("Failed to update event. Please try again.");
+    }
+  }, [updateEvent]);  
+
+  const handleEventResize = useCallback(async (resizeInfo: EventResizeDoneArg) => {
+    const { event } = resizeInfo;
+  
+    if (!event.start || !event.end) {
+      console.error("Event start or end date is null, cannot update event.");
+      return;
+    }
+  
+    const updatedEvent = {
+      id: Number(event.id),
+      startTime: event.start.toISOString(),
+      endTime: event.end.toISOString(), // The resized end time
+    };
+  
+    console.log("Updating event via resize:", updatedEvent);
+  
+    try {
+      await updateEvent(updatedEvent).unwrap();
+      console.log("Event updated successfully");
+    } catch (error) {
+      console.error("Failed to update event:", error);
+      alert("Failed to update event. Please try again.");
+    }
+  }, [updateEvent]);
+  
 
   const handleModalSubmit = async ({
     title,
@@ -72,48 +131,49 @@ const CalendarComponent = () => {
     startTime: string;
     endTime: string;
   }) => {
-
-  if (!user?.calendarId) {
-    alert("User does not have an associated calendar.");
-    return;
-  }
+    if (!user?.calendarId) {
+      alert("User does not have an associated calendar.");
+      return;
+    }
+  
     const eventData = {
-    title,
-    description,
-    startTime: new Date(`${startDate}T${startTime}:00`).toISOString(),
-    endTime: new Date(`${endDate}T${endTime}:00`).toISOString(),
-    calendarId: user.calendarId,
-  };      
-
-  console.log("Submitting event:", eventData);
-
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/event`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(eventData),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || "Failed to create event");
-  }
-
-  console.log("Event created successfully.");
+      id: selectedEvent?.event.id ? Number(selectedEvent.event.id) : undefined, // Convert ID to number
+      title,
+      description,
+      startTime: new Date(`${startDate}T${startTime}:00`).toISOString(),
+      endTime: new Date(`${endDate}T${endTime}:00`).toISOString(),
+      calendarId: user.calendarId,
+    };
   
-  setModalOpen(false);
+    try {
+      if (selectedEvent) {
+        // Updating an existing event
+        await updateEvent(eventData).unwrap();
+        console.log("Event updated successfully");
+      } else {
+        // Creating a new event
+        await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/event`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(eventData),
+        });
+        console.log("Event created successfully.");
+      }
+    } catch (error) {
+      console.error("Error updating/creating event:", error);
+    }
   
-  console.log("Refetching events...");
-  await refetch();
+    setModalOpen(false);
+    await refetch();
   };
+  
 
-  const handleEventClick = useCallback(async (clickInfo: EventClickArg) => {
+  const handleEventDelete = useCallback(async (clickInfo: EventClickArg) => {
     if (window.confirm(`Delete event "${clickInfo.event.title}"?`)) {
       try {
         console.log("Deleting event:", clickInfo.event.id);
-
         await deleteEvent(Number(clickInfo.event.id)).unwrap();
         console.log("Event deleted successfully");
-
         clickInfo.event.remove();
       } catch (error) {
         console.error("Failed to delete event:", error);
@@ -123,7 +183,7 @@ const CalendarComponent = () => {
   }, [deleteEvent]);
 
   const calendarClassNames = `w-[150vh] h-[60vh] ${
-    isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
+    isDarkMode ? "bg-black-300 text-white" : "bg-grey-300 text-black"
   }`;
 
   return (
@@ -143,10 +203,11 @@ const CalendarComponent = () => {
         titleFormat={{ year: "numeric", month: "long" }}
         events={formattedEvents}
         select={handleDateSelect}
-        eventClick={handleEventClick}
+        eventClick={handleEventDelete}
+        eventDrop={handleEventDrop}
+        eventResize={handleEventResize}
         eventColor={isDarkMode ? "#4B5563" : "#2563EB"}
         themeSystem="bootstrap5"
-
         longPressDelay={150}
         eventLongPressDelay={200}
         selectLongPressDelay={150}
@@ -156,7 +217,12 @@ const CalendarComponent = () => {
         onClose={() => setModalOpen(false)}
         onSubmit={handleModalSubmit}
         selectedDateRange={
-          selectedDate
+          selectedEvent?.event.start
+            ? {
+                start: selectedEvent.event.start.toISOString(),
+                end: selectedEvent.event.end?.toISOString() || selectedEvent.event.start.toISOString(),
+              }
+            : selectedDate
             ? {
                 start: selectedDate.startStr,
                 end: selectedDate.endStr,

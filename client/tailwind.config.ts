@@ -24,7 +24,7 @@ const config: Config = {
           400: "#60a5fa",
           500: "#3b82f6",
         },
-        "dark-bg": "#101214",
+        "dark-bg": "#171717",
         "dark-secondary": "#1d1f21",
         "dark-tertiary": "#3b3d40",
         "blue-primary": "#0275ff",

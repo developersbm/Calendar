@@ -139,3 +139,31 @@ export const deleteEvent = async (req: Request, res: Response): Promise<void> =>
     res.status(500).json({ message: `Error deleting event: ${error.message}` });
   }
 };
+
+// Update Event when moving
+export const updateEvent = async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
+  const { startTime, endTime } = req.body;
+
+  if (!id) {
+    res.status(400).json({ message: "Event ID is required." });
+    return;
+  }
+
+  try {
+    console.log(`Updating event ID: ${id} with new times`);
+
+    const updatedEvent = await prisma.event.update({
+      where: { id: Number(id) },
+      data: {
+        startTime: new Date(startTime),
+        endTime: new Date(endTime),
+      },
+    });
+
+    res.status(200).json({ message: "Event time updated successfully", updatedEvent });
+  } catch (error: any) {
+    console.error("Error updating event:", error);
+    res.status(500).json({ message: `Error updating event: ${error.message}` });
+  }
+};

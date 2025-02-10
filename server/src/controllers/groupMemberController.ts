@@ -15,16 +15,47 @@ export const getAllMembers = async (req: Request, res: Response): Promise<void> 
 
 // Fetch all members of a group
 export const getMembersByGroup = async (req: Request, res: Response): Promise<void> => {
+  try {
     const { groupId } = req.params;
-    try {
-        const members = await prisma.groupMember.findMany({
-            where: { groupId: Number(groupId) },
-            include: { user: true },
-        });
-        res.json(members);
-    } catch (error: any) {
-        res.status(500).json({ message: `Error fetching group members: ${error.message}` });
+
+    if (!groupId) {
+      res.status(400).json({ error: "Group ID is required" });
+      return;
     }
+
+    // Fetch members of the group along with their calendars and events
+    const groupMembers = await prisma.groupMember.findMany({
+      where: { groupId: Number(groupId) },
+      include: {
+        user: {
+          include: {
+            calendar: {
+              include: {
+                events: {
+                  include: {
+                    participants: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Extract user information along with their events
+    const membersWithEvents = groupMembers.map((member) => ({
+      userId: member.user.id,
+      name: member.user.name,
+      email: member.user.email,
+      events: member.user.calendar?.events || [],
+    }));
+
+    res.status(200).json(membersWithEvents);
+  } catch (error) {
+    console.error("Error fetching group members:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 };
 
 // Add a member to a group

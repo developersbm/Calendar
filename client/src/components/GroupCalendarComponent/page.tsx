@@ -1,81 +1,77 @@
 "use client";
-import { useCallback, useState, useEffect } from "react";
-import { useParams } from "next/navigation";
-import timeGridPlugin from "@fullcalendar/timegrid";
+import { useCallback, useState, useMemo } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
+import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import allLocales from "@fullcalendar/core/locales-all";
+import { EventResizeDoneArg } from "@fullcalendar/interaction";
 import { useAppSelector } from "@/app/redux";
 import Modal from "@/components/Modal/page";
-import { DateSelectArg, EventClickArg } from "@fullcalendar/core";
-import {
-  useGetGroupsQuery,
-  useGetEventCalendarQuery,
-  useDeleteEventMutation,
+import { DateSelectArg, EventClickArg, EventDropArg } from "@fullcalendar/core";
+import { 
+  useGetAuthUserQuery, 
+  useGetUserQuery, 
+  useGetEventCalendarQuery, 
+  useDeleteEventMutation, 
+  useUpdateEventMutation,
+  useGetMembersByGroupQuery,
 } from "@/state/api";
 
-interface EventParticipant {
-  userId: number;
-  status: string;
-}
-
-interface CalendarEvent {
-  id: string;
-  title: string;
-  start: string;
-  end: string;
-  extendedProps: {
-    description?: string;
-    recurrence?: string;
-    calendarId: number;
-    participants?: EventParticipant[];
-  };
-}
-
-const GroupCalendarComponent = () => {
-  const { groupId } = useParams();
-  const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
+const GroupCalendarComponent = ({ groupId }: { groupId: number }) => {
   const [isModalOpen, setModalOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<EventClickArg | null>(null);
   const [selectedDate, setSelectedDate] = useState<DateSelectArg | undefined>(undefined);
+  
+  const { data: groupMembers } = useGetMembersByGroupQuery(groupId, { skip: !groupId });
+  
+  const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
+  
   const [deleteEvent] = useDeleteEventMutation();
+  const [updateEvent] = useUpdateEventMutation();
 
-  // Fetch the group using group ID
-  const { data: group } = useGetGroupsQuery(undefined, {
-    selectFromResult: ({ data }) => ({
-      data: data?.find((g) => g.id === Number(groupId)),
-    }),
-  });
+  const { data: authData } = useGetAuthUserQuery({});
+  const userId = authData?.user?.userId;
 
-  // Fetch events for the group's calendar
-  const { data: groupEvents, refetch } = useGetEventCalendarQuery(group?.calendarId ?? 0, {
-    skip: !group?.calendarId,
-  });
+  const { data: user, isError: isUserError } = useGetUserQuery(userId ?? "", { skip: !userId });
 
-  // Update events when data changes
-  useEffect(() => {
-    if (groupEvents) {
-      setEvents(
-        groupEvents.map((event) => ({
+  const { refetch } = useGetEventCalendarQuery(user?.calendarId as number, { skip: !user?.calendarId });
+  
+  const memberColors = useMemo(() => {
+    const colors = [
+      "#bd1c14", "#21bd14", "#085090", "#370890", "#900871",
+    ];
+    const assignedColors: Record<number, string> = {};
+
+    groupMembers?.forEach((member, index) => {
+      assignedColors[member.userId] = colors[index % colors.length];
+    });
+
+    return assignedColors;
+  }, [groupMembers]);
+
+  // 🎯 Combine and format all events
+  const allGroupEvents = groupMembers
+    ? groupMembers.flatMap((member) =>
+        member.events?.map((event) => ({
           id: event.id.toString(),
-          title: event.title,
+          title: `${member.name} - ${event.title}`, // Add member name next to the event title
           start: new Date(event.startTime).toISOString(),
           end: new Date(event.endTime).toISOString(),
           extendedProps: {
             description: event.description,
             recurrence: event.recurrence,
-            calendarId: event.calendarId,
             participants: event.participants,
           },
-        }))
-      );
-    }
-  }, [groupEvents]);
+          color: memberColors[member.userId], // Assign unique color
+        })) || []
+      )
+    : [];
+
 
   const handleDateSelect = useCallback((selectInfo: DateSelectArg) => {
     console.log("Selected Date Info from FullCalendar:", selectInfo);
-  
+
     const startDateTime = new Date(selectInfo.startStr);
     const endDateTime = new Date(selectInfo.endStr);
 
@@ -85,8 +81,60 @@ const GroupCalendarComponent = () => {
       endStr: endDateTime.toISOString(),
     });
 
+    setSelectedEvent(null); // Reset selected event
     setModalOpen(true);
   }, []);
+
+  const handleEventDrop = useCallback(async (dropInfo: EventDropArg) => {
+    const { event } = dropInfo;
+  
+    if (!event.start) {
+      console.error("Event start date is null, cannot update event.");
+      return;
+    }
+  
+    const updatedEvent = {
+      id: Number(event.id),
+      startTime: event.start.toISOString(),
+      endTime: event.end ? event.end.toISOString() : event.start.toISOString(),
+    };
+  
+    console.log("Updating event via drag-and-drop:", updatedEvent);
+  
+    try {
+      await updateEvent(updatedEvent).unwrap();
+      console.log("Event updated successfully");
+    } catch (error) {
+      console.error("Failed to update event:", error);
+      alert("Failed to update event. Please try again.");
+    }
+  }, [updateEvent]);  
+
+  const handleEventResize = useCallback(async (resizeInfo: EventResizeDoneArg) => {
+    const { event } = resizeInfo;
+  
+    if (!event.start || !event.end) {
+      console.error("Event start or end date is null, cannot update event.");
+      return;
+    }
+  
+    const updatedEvent = {
+      id: Number(event.id),
+      startTime: event.start.toISOString(),
+      endTime: event.end.toISOString(), // The resized end time
+    };
+  
+    console.log("Updating event via resize:", updatedEvent);
+  
+    try {
+      await updateEvent(updatedEvent).unwrap();
+      console.log("Event updated successfully");
+    } catch (error) {
+      console.error("Failed to update event:", error);
+      alert("Failed to update event. Please try again.");
+    }
+  }, [updateEvent]);
+  
 
   const handleModalSubmit = async ({
     title,
@@ -103,65 +151,64 @@ const GroupCalendarComponent = () => {
     startTime: string;
     endTime: string;
   }) => {
-    if (!group?.calendarId) {
-      alert("Group does not have an associated calendar.");
+    if (!user?.calendarId) {
+      alert("User does not have an associated calendar.");
       return;
     }
-
+  
     const eventData = {
+      id: selectedEvent?.event.id ? Number(selectedEvent.event.id) : undefined, // Convert ID to number
       title,
       description,
       startTime: new Date(`${startDate}T${startTime}:00`).toISOString(),
       endTime: new Date(`${endDate}T${endTime}:00`).toISOString(),
-      calendarId: group.calendarId,
+      calendarId: user.calendarId,
     };
-
-    console.log("Submitting event:", eventData);
-
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/event`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(eventData),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Failed to create event");
+  
+    try {
+      if (selectedEvent) {
+        // Updating an existing event
+        await updateEvent(eventData).unwrap();
+        console.log("Event updated successfully");
+      } else {
+        // Creating a new event
+        await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/event`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(eventData),
+        });
+        console.log("Event created successfully.");
+      }
+    } catch (error) {
+      console.error("Error updating/creating event:", error);
     }
-
-    console.log("Event created successfully.");
+  
     setModalOpen(false);
-
-    // Refetch events after adding a new one
-    console.log("Refetching events...");
     await refetch();
   };
+  
 
-  const handleEventClick = useCallback(
-    async (clickInfo: EventClickArg) => {
-      if (window.confirm(`Delete event "${clickInfo.event.title}"?`)) {
-        try {
-          console.log("Deleting event:", clickInfo.event.id);
-
-          await deleteEvent(Number(clickInfo.event.id)).unwrap();
-          console.log("Event deleted successfully");
-
-          // Remove from UI
-          setEvents((prev) => prev.filter((event) => event.id !== clickInfo.event.id));
-
-          await refetch();
-        } catch (error) {
-          console.error("Failed to delete event:", error);
-          alert("Failed to delete event. Please try again.");
-        }
+  const handleEventDelete = useCallback(async (clickInfo: EventClickArg) => {
+    if (window.confirm(`Delete event "${clickInfo.event.title}"?`)) {
+      try {
+        console.log("Deleting event:", clickInfo.event.id);
+        await deleteEvent(Number(clickInfo.event.id)).unwrap();
+        console.log("Event deleted successfully");
+        clickInfo.event.remove();
+      } catch (error) {
+        console.error("Failed to delete event:", error);
+        alert("Failed to delete event. Please try again.");
       }
-    },
-    [deleteEvent, refetch]
-  );
+    }
+  }, [deleteEvent]);
+
+  const calendarClassNames = `w-[150vh] h-[60vh] ${
+    isDarkMode ? "bg-black-300 text-white" : "bg-grey-300 text-black"
+  }`;
 
   return (
-    <div className={`w-[150vh] h-[60vh] ${isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"}`}>
-      <h2 className="text-xl font-bold">{group?.title}'s Calendar</h2>
+    <div className={calendarClassNames}>
+      {isUserError && <p className="text-red-500">Failed to fetch user information.</p>}
       <FullCalendar
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
         initialView="dayGridMonth"
@@ -174,16 +221,35 @@ const GroupCalendarComponent = () => {
           right: "prev,next,today,dayGridMonth,timeGridWeek,timeGridDay",
         }}
         titleFormat={{ year: "numeric", month: "long" }}
+        events={allGroupEvents}
         select={handleDateSelect}
-        eventClick={handleEventClick}
+        eventClick={handleEventDelete}
+        eventDrop={handleEventDrop}
+        eventResize={handleEventResize}
         eventColor={isDarkMode ? "#4B5563" : "#2563EB"}
         themeSystem="bootstrap5"
-
         longPressDelay={150}
         eventLongPressDelay={200}
         selectLongPressDelay={150}
       />
-      <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} onSubmit={handleModalSubmit} />
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setModalOpen(false)}
+        onSubmit={handleModalSubmit}
+        selectedDateRange={
+          selectedEvent?.event.start
+            ? {
+                start: selectedEvent.event.start.toISOString(),
+                end: selectedEvent.event.end?.toISOString() || selectedEvent.event.start.toISOString(),
+              }
+            : selectedDate
+            ? {
+                start: selectedDate.startStr,
+                end: selectedDate.endStr,
+              }
+            : undefined
+        }
+      />
     </div>
   );
 };

@@ -134,6 +134,19 @@ export const api = createApi({
       providesTags: ["GroupMembers"]
     }),
 
+    // Get all Members in the group
+    getMembersByGroup: build.query<
+    { userId: number; name: string; email: string; events: any[] }[],
+    number
+  >({
+    query: (groupId) => ({
+      url: `groupMember/${groupId}/members`,
+      method: "GET",
+    }),
+    providesTags: ["GroupMembers"],
+  }),
+  
+
     // Calendars (Calendar is creates as soon as user registers)
     getCalendars: build.query<Calendar[], void>({
       query: () => "calendars",
@@ -165,6 +178,14 @@ export const api = createApi({
       query: (id) => ({
         url: `${process.env.NEXT_PUBLIC_API_BASE_URL}/event/${id}`,
         method: "DELETE",
+      }),
+      invalidatesTags: ["Events"],
+    }),
+    updateEvent: build.mutation<Event, Partial<Event>>({
+      query: ({ id, ...updatedEvent }) => ({
+        url: `${process.env.NEXT_PUBLIC_API_BASE_URL}/event/${id}`,
+        method: "PUT",
+        body: updatedEvent,
       }),
       invalidatesTags: ["Events"],
     }),
@@ -226,6 +247,8 @@ export const {
   useGetGroupMembersQuery,
   useDeleteGroupMutation,
 
+  useGetMembersByGroupQuery,
+
   useAddMemberMutation,
   useRemoveMemberMutation,
 
@@ -235,6 +258,7 @@ export const {
   useGetEventCalendarQuery,
   useDeleteEventMutation,
   useCreateEventMutation,
+  useUpdateEventMutation,
 
   useGetNotificationsQuery,
   useCreateNotificationMutation,

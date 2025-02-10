@@ -68,34 +68,37 @@ export const postGroup = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // Check if a calendar already exists for this user
+    const existingCalendar = await prisma.calendar.findFirst({
+      where: { ownerId: userId, ownerType: "Group" },
+    });
+
+    if (existingCalendar) {
+      res.status(400).json({ message: "This user already owns a group with a calendar." });
+    }
+
     // Set default icon URL if not provided
     if (!iconUrl) {
       iconUrl = "NULL";
     }
 
-    // Create the group **and the calendar in the same transaction**
+    // Step 1: Create the calendar first
+    const createdCalendar = await prisma.calendar.create({
+      data: {
+        ownerId: userId, // Use a valid ownerId from the start
+        ownerType: "Group",
+        description: `Calendar for ${title}`,
+      },
+    });
+
+    // Step 2: Create the group
     const newGroup = await prisma.group.create({
       data: {
         title,
         description,
         iconUrl,
-        calendar: {
-          create: {
-            ownerId: 0, // Temporary value; will be updated immediately after
-            ownerType: "Group",
-            description: `Calendar for ${title}`,
-          },
-        },
+        calendarId: createdCalendar.id, // Link the newly created calendar
       },
-      include: {
-        calendar: true, // Fetch the created calendar
-      },
-    });
-
-    // Update the calendar with the correct group ownerId
-    const updatedCalendar = await prisma.calendar.update({
-      where: { id: newGroup.calendar.id },
-      data: { ownerId: newGroup.id }, // Set the actual group ID
     });
 
     // Step 3: Add the user as a group admin
@@ -109,15 +112,16 @@ export const postGroup = async (req: Request, res: Response): Promise<void> => {
     });
 
     // Return updated group with linked calendar
-    res.status(201).json({ 
-      message: "Group created successfully", 
-      group: { ...newGroup, calendar: updatedCalendar } 
+    res.status(201).json({
+      message: "Group created successfully",
+      group: { ...newGroup, calendar: createdCalendar },
     });
   } catch (error: any) {
     console.error("Error creating group:", error);
     res.status(500).json({ message: `Error creating group: ${error.message}` });
   }
 };
+
 
 // Delete Group
 export const deleteGroup = async (req: Request, res: Response): Promise<void> => {
