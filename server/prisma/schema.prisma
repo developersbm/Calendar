@@ -128,18 +128,15 @@ model SavingPlan {
   frequency      String
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
-  transactions   Transaction[]  // Relation to the Transaction model
 
   @@map("saving_plans")
 }
 
 model Transaction {
   id          Int       @id @default(autoincrement())
-  savingPlanId Int
   type        String    // Either "Deposit" or "Withdraw"
   amount      Float
   date        DateTime  @default(now())
-  savingPlan  SavingPlan @relation(fields: [savingPlanId], references: [id])
 
   @@map("transactions")
 }
