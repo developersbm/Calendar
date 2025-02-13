@@ -134,7 +134,8 @@ model SavingPlan {
 
 model Transaction {
   id          Int       @id @default(autoincrement())
-  type        String    // Either "Deposit" or "Withdraw"
+  ownerId     Int
+  type        String    // Either "Deposit" or "Withdraw" 
   amount      Float
   date        DateTime  @default(now())
 
