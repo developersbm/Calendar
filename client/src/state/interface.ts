@@ -102,6 +102,14 @@ export interface Membership {
     updatedAt: string;
   }
   
+  export interface Transaction {
+    id: number;
+    ownerId: number;
+    type: string;
+    amount: number;
+    date: string;
+  }
+  
   export interface Notification {
     id: number;
     userId: number;

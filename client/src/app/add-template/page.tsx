@@ -14,6 +14,7 @@ import {
   Edit2,
   CirclePlus,
 } from "lucide-react";
+import { useCreateTemplateMutation, useGetAuthUserQuery } from "@/state/api";
 
 interface EventOption {
   name: string;
@@ -36,10 +37,24 @@ const AddTemplate: React.FC = () => {
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
 
-  const handleTitleClick = () => setIsEditingTitle(true);
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => setTemplateTitle(e.target.value);
-  const handleTitleBlur = () => setIsEditingTitle(false);
+  const handleTitleClick = () => {
+    setIsEditingTitle(true);
+    setTemplateTitle("");
+  };
+  
+  const handleTitleBlur = () => {
+    if (!templateTitle.trim()) {
+      setTemplateTitle("Click to edit event name");
+    }
+    setIsEditingTitle(false);
+  };
+  
 
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => setTemplateTitle(e.target.value);
+    
+  const { data: authData } = useGetAuthUserQuery({});
+  const userId = authData?.userDetails?.id;
+  const [createTemplate] = useCreateTemplateMutation();
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
 
   const eventOptions: EventOption[] = [
@@ -53,27 +68,47 @@ const AddTemplate: React.FC = () => {
   const handleOptionClick = (option: EventOption) => setSelectedOption(option);
 
   const handleFieldChange = (fieldName: string, value: string) => {
-    const numericValue = fieldName === "Price" ? parseFloat(value) || 0 : value;
-
-    setDetailsData((prev) => {
-      const updatedDetails: DetailsData = {
-        ...prev,
-        [selectedOption!.name]: {
-          ...prev[selectedOption!.name],
-          [fieldName]: numericValue,
-        },
-      };
-
-      const updatedTotalPrice = Object.values(updatedDetails).reduce((sum, category) => {
-        const price = parseFloat((category as { Price?: number }).Price?.toString() || "0");
-        return sum + price;
-      }, 0);
-
-      setTotalPrice(updatedTotalPrice);
-      return updatedDetails;
-    });
+    setDetailsData((prev) => ({
+      ...prev,
+      [selectedOption!.name]: {
+        ...prev[selectedOption!.name],
+        [fieldName]: value.toString(),
+      },
+    }));
   };
-
+  
+  const handleAddTemplate = async () => {
+    if (!templateTitle.trim()) {
+      alert("Please enter a template name.");
+      return;
+    }
+  
+    if (!userId) {
+      alert("User not authenticated.");
+      return;
+    }
+  
+    const formattedElements: Record<string, string> = {};
+    Object.entries(detailsData).forEach(([category, fields]) => {
+      Object.entries(fields).forEach(([key, value]) => {
+        formattedElements[`${category} - ${key}`] = value.toString();
+      });
+    });
+  
+    try {
+      await createTemplate({
+        title: templateTitle,
+        description: "Custom event template",
+        ownerId: userId,
+        elements: formattedElements,
+      }).unwrap();
+      alert("Template added successfully!");
+    } catch (error) {
+      console.error("Error creating template:", error);
+      alert("Failed to add template.");
+    }
+  };
+  
   return (
     <div className="flex h-screen bg-gray-100 dark:bg-black">
       {/* Sidebar */}
@@ -192,11 +227,11 @@ const AddTemplate: React.FC = () => {
           <Star size={28} className="text-white" />
         </button>
         <button
-          onClick={() => alert("Template Added!")}
-          className="flex items-center justify-center w-16 h-16 bg-green-500 rounded-full hover:bg-green-600 focus:outline-none"
-        >
-          <CirclePlus size={28} className="text-white" />
-        </button>
+        onClick={handleAddTemplate}
+        className="flex items-center justify-center w-16 h-16 bg-green-500 rounded-full hover:bg-green-600 focus:outline-none"
+      >
+        <CirclePlus size={28} className="text-white" />
+      </button>
       </div>
     </div>
   );

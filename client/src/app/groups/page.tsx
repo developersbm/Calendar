@@ -8,8 +8,8 @@ import GroupModal from "@/components/GroupModal/page";
 
 const GroupsPage = () => {
   const { data: users } = useGetUsersQuery();
-  const { data: groups, refetch } = useGetGroupsQuery();
   const { data: groupMembers } = useGetGroupMembersQuery();
+  const { data: groups, refetch: refetchSidebarGroups } = useGetGroupsQuery();
   
   const { data: authData } = useGetAuthUserQuery({});
   let userId = authData?.user.userId;
@@ -50,7 +50,6 @@ const GroupsPage = () => {
     if (!email.trim()) return alert("Please enter an email.");
     try {
       await addMember({ groupId, email }).unwrap();
-      alert("Member added successfully!");
       setAddMemberGroup(null);
       setEmail("");
     } catch (error) {
@@ -60,34 +59,39 @@ const GroupsPage = () => {
   };
 
   const handleCreateGroup = async (title: string, description: string) => {
+    let userId = user?.id;
     if (!userId) {
       alert("User is not authenticated.");
       return;
     }
-    userId = String(user?.id);
-
+  
     try {
       await createGroup({ title, description, userId: Number(userId) }).unwrap();
+      alert("Group created successfully!");
       setIsModalOpen(false);
-      refetch(); // Refresh groups list
-    } catch (error) {4
-      console.error("Error creating group:", error);
-      alert("Failed to create group.");
+      
+      // Refetch both the main groups list and the sidebar groups list
+      refetchSidebarGroups();
+    } catch (error: any) {
+      console.error("Error creating group:", error.data?.message);
+      alert(`Failed to create group: ${error.data?.message || "Unknown error"}`);
     }
   };
-
-  // DELETE THE CALENDAR FROM THE GROUP AS WELL
+  
+  
   const handleDeleteGroup = async (groupId: number) => {
     if (!confirm("Are you sure you want to delete this group?")) return;
+  
     try {
       await deleteGroup(groupId).unwrap();
       alert("Group deleted successfully!");
-      refetch();
-    } catch (error) {
-      console.error("Error deleting group:", error);
-      alert("Failed to delete group.");
+  
+      refetchSidebarGroups();
+    } catch (error: any) {
+      console.error("Error deleting group:", error.data?.message);
+      alert(`Failed to delete group: ${error.data?.message || "Unknown error"}`);
     }
-  };
+  };  
 
   const handleRemoveMember = async (groupId: number, memberId: number) => {
     const groupMembersCount = groupMembers?.filter((gm) => gm.groupId === groupId).length;
@@ -99,7 +103,7 @@ const GroupsPage = () => {
     try {
       await removeMember({ groupId, memberId }).unwrap();
       alert("Member removed successfully!");
-      refetch();
+      refetchSidebarGroups();
     } catch (error) {
       console.error("Error removing member:", error);
       alert("Failed to remove member.");

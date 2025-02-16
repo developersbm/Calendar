@@ -1,19 +1,16 @@
-import express, { Request, Response } from "express";
+import express from "express";
 import dotenv from "dotenv";
 import bodyParser from "body-parser";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 /* ROUTE IMPORTS */
-import auditLogRoutes from "./routes/auditLogRoutes"
 import calendarRoutes from "./routes/calendarRoutes"
 import eventParticipant from "./routes/eventParticipantRoutes"
 import eventRoutes from "./routes/eventRoutes"
 import groupMemberRoutes from "./routes/groupMemberRoutes"
 import groupRoutes from "./routes/groupRoutes"
-import membershipRoutes from "./routes/membershipRoutes"
-import notificationRoutes from "./routes/notificationRoutes"
-import savingPlanRoutes from "./routes/savingPlanRoutes"
+import transactionRoutes from "./routes/transactionRoutes"
 import templateRoutes from "./routes/templateRoutes"
 import userRoutes from "./routes/userRoutes"
 
@@ -33,15 +30,12 @@ app.get("/", (req, res) => {
     res.send("This is home route");
 });
 
-app.use("/auditLog", auditLogRoutes);
 app.use("/calendar", calendarRoutes);
 app.use("/eventParticipant", eventParticipant);
 app.use("/event", eventRoutes);
 app.use("/groupMember", groupMemberRoutes);
 app.use("/group", groupRoutes);
-app.use("/membership", membershipRoutes);
-app.use("/notification", notificationRoutes);
-app.use("/savingPlan", savingPlanRoutes);
+app.use("/transaction", transactionRoutes);
 app.use("/template", templateRoutes);
 app.use("/user", userRoutes);
 

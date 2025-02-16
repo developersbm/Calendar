@@ -21,7 +21,7 @@ import {
   useGetAuthUserQuery,
   useGetGroupMembersQuery,
   useGetGroupsQuery,
-  useGetTemplatesQuery,
+  useGetTemplatesByUserQuery,
   useGetUserQuery,
 } from "@/state/api";
 import { useAppDispatch, useAppSelector } from "@/app/redux";
@@ -39,9 +39,9 @@ const Sidebar = () => {
     skip: !userId,
   });
 
-  const { data: groups } = useGetGroupsQuery();
+  const { data: groups, refetch: refetchSidebarGroups } = useGetGroupsQuery();
   const { data: groupMembers } = useGetGroupMembersQuery();
-  const { data: templates } = useGetTemplatesQuery();
+  const { data: templates } = useGetTemplatesByUserQuery(userId ?? "", { skip: !userId });
 
   const dispatch = useAppDispatch();
   const isSidebarCollapsed = useAppSelector(
@@ -156,7 +156,7 @@ const Sidebar = () => {
               />
             ))}
             <Link
-              href="/add-template"
+              href="templates"
               className="flex w-full items-center gap-3 px-8 py-3 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               <Search className="h-6 w-6" />

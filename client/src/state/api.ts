@@ -6,8 +6,7 @@ import {
   Calendar,
   Event,
   Template,
-  SavingPlan,
-  Notification,
+  Transaction,
 } from "./interface";
 import { fetchAuthSession, getCurrentUser } from "aws-amplify/auth";
 
@@ -42,7 +41,7 @@ export const api = createApi({
     "Events",
     "Notifications",
     "Templates",
-    "SavingPlans",
+    "Transaction",
     "GroupMembers",
   ],
   endpoints: (build) => ({
@@ -93,23 +92,22 @@ export const api = createApi({
     }),
     createGroup: build.mutation<Group, { title: string; description: string; userId: number }>({
       query: ({ title, description, userId }) => ({
-        url: "/group",
+        url: "group",
         method: "POST",
-        body: {
-          title,
-          description,
-          userId: Number(userId),
-        },
+        body: { title, description, userId: Number(userId) },
       }),
+      // Force re-fetch of the sidebar groups & main groups list
       invalidatesTags: ["Groups"],
     }),
+    
     deleteGroup: build.mutation<void, number>({
       query: (groupId) => ({
         url: `group/${groupId}`,
         method: "DELETE",
       }),
+      // Force re-fetch of the sidebar groups & main groups list
       invalidatesTags: ["Groups"],
-    }),
+    }),    
     
     // Add & Remove Members
     addMember: build.mutation<void, { groupId: number; email: string }>({
@@ -190,47 +188,53 @@ export const api = createApi({
       invalidatesTags: ["Events"],
     }),
     
-
-    // Notifications
-    getNotifications: build.query<Notification[], void>({
-      query: () => "notifications",
-      providesTags: ["Notifications"],
-    }),
-    createNotification: build.mutation<Notification, Partial<Notification>>({
-      query: (notification) => ({
-        url: "notifications",
-        method: "POST",
-        body: notification,
-      }),
-      invalidatesTags: ["Notifications"],
-    }),
-
     // Templates (CRUD)
-    getTemplates: build.query<Template[], void>({
-      query: () => "template",
+
+    getTemplatesByUser: build.query<Template[], string>({
+      query: (userId) => `template/user/${userId}`,
+      providesTags: ["Templates"],
+    }),
+    getTemplateById: build.query<Template, number>({
+      query: (id) => `template/${id}`,
       providesTags: ["Templates"],
     }),
     createTemplate: build.mutation<Template, Partial<Template>>({
       query: (template) => ({
-        url: "templates",
+        url: "template",
         method: "POST",
         body: template,
       }),
       invalidatesTags: ["Templates"],
     }),
+    updateTemplate: build.mutation<Template, { id: number; data: Partial<Template> }>({
+      query: ({ id, data }) => ({
+        url: `template/${id}`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: ["Templates"],
+    }),
+    deleteTemplate: build.mutation<void, number>({
+      query: (id) => ({
+        url: `template/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Templates"],
+    }),
 
     // Saving Plans (CRUD)
-    getSavingPlans: build.query<SavingPlan[], void>({
-      query: () => "saving-plans",
-      providesTags: ["SavingPlans"],
+    getTransactions: build.query<Transaction[], number>({
+      query: (userId) => `transaction/${userId}`,
+      providesTags: ["Transaction"],
     }),
-    createSavingPlan: build.mutation<SavingPlan, Partial<SavingPlan>>({
-      query: (savingPlan) => ({
-        url: "saving-plans",
+
+    addTransaction: build.mutation<Transaction, { userId: number; type: "Deposit" | "Withdraw"; amount: number }>({
+      query: ({ userId, type, amount }) => ({
+        url: "transaction",
         method: "POST",
-        body: savingPlan,
+        body: { userId, type, amount },
       }),
-      invalidatesTags: ["SavingPlans"],
+      invalidatesTags: ["Transaction"],
     }),
   }),
 });
@@ -260,12 +264,12 @@ export const {
   useCreateEventMutation,
   useUpdateEventMutation,
 
-  useGetNotificationsQuery,
-  useCreateNotificationMutation,
-
-  useGetTemplatesQuery,
+  useGetTemplateByIdQuery,
+  useGetTemplatesByUserQuery,
   useCreateTemplateMutation,
+  useUpdateTemplateMutation,
+  useDeleteTemplateMutation,
 
-  useGetSavingPlansQuery,
-  useCreateSavingPlanMutation,
+  useGetTransactionsQuery,
+  useAddTransactionMutation,
 } = api;

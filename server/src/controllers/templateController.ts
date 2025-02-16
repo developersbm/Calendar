@@ -3,23 +3,34 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// Get all templates
-export const getAllTemplates = async (req: Request, res: Response): Promise<void> => {
+// Get all templates for a specific user
+export const getTemplatesByUser = async (req: Request, res: Response): Promise<void> => {
+    const { userId } = req.params;
+
+    if (!userId) {
+        res.status(400).json({ message: "User ID is required." });
+        return;
+    }
+
     try {
-        const templates = await prisma.template.findMany();
+        const templates = await prisma.template.findMany({
+            where: { ownerId: Number(userId) },
+        });
         res.json(templates);
     } catch (error: any) {
         res.status(500).json({ message: `Error fetching templates: ${error.message}` });
     }
 };
 
-// Get a template by ID
+// Get a specific template by ID
 export const getTemplateById = async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
+
     try {
         const template = await prisma.template.findUnique({ where: { id: Number(id) } });
         if (!template) {
             res.status(404).json({ message: "Template not found" });
+            return;
         }
         res.json(template);
     } catch (error: any) {
@@ -30,9 +41,15 @@ export const getTemplateById = async (req: Request, res: Response): Promise<void
 // Create a new template
 export const createTemplate = async (req: Request, res: Response): Promise<void> => {
     const { title, description, ownerId, elements } = req.body;
+
+    if (!title || !ownerId || !elements) {
+        res.status(400).json({ message: "Title, ownerId, and elements are required." });
+        return;
+    }
+
     try {
         const template = await prisma.template.create({
-            data: { title, description, ownerId, elements },
+            data: { title, description, ownerId: Number(ownerId), elements },
         });
         res.status(201).json({ message: "Template created successfully", template });
     } catch (error: any) {
@@ -44,6 +61,7 @@ export const createTemplate = async (req: Request, res: Response): Promise<void>
 export const updateTemplate = async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
     const { title, description, isActive } = req.body;
+
     try {
         const template = await prisma.template.update({
             where: { id: Number(id) },
@@ -58,6 +76,7 @@ export const updateTemplate = async (req: Request, res: Response): Promise<void>
 // Delete a template
 export const deleteTemplate = async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
+
     try {
         await prisma.template.delete({ where: { id: Number(id) } });
         res.json({ message: "Template deleted successfully" });

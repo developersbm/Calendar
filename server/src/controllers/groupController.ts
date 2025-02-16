@@ -68,13 +68,20 @@ export const postGroup = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Check if a calendar already exists for this user
-    const existingCalendar = await prisma.calendar.findFirst({
+    // 🔹 Check if the user already has a calendar
+    let calendar = await prisma.calendar.findFirst({
       where: { ownerId: userId, ownerType: "Group" },
     });
 
-    if (existingCalendar) {
-      res.status(400).json({ message: "This user already owns a group with a calendar." });
+    // 🔹 If no calendar exists, create a new one
+    if (!calendar) {
+      calendar = await prisma.calendar.create({
+        data: {
+          ownerId: userId,
+          ownerType: "Group",
+          description: `Calendar for ${title}`,
+        },
+      });
     }
 
     // Set default icon URL if not provided
@@ -82,22 +89,13 @@ export const postGroup = async (req: Request, res: Response): Promise<void> => {
       iconUrl = "NULL";
     }
 
-    // Step 1: Create the calendar first
-    const createdCalendar = await prisma.calendar.create({
-      data: {
-        ownerId: userId, // Use a valid ownerId from the start
-        ownerType: "Group",
-        description: `Calendar for ${title}`,
-      },
-    });
-
-    // Step 2: Create the group
+    // Step 2: Create the group (link it to the existing or new calendar)
     const newGroup = await prisma.group.create({
       data: {
         title,
         description,
         iconUrl,
-        calendarId: createdCalendar.id, // Link the newly created calendar
+        calendarId: calendar.id, // 🔹 Link the group to the calendar
       },
     });
 
@@ -111,10 +109,9 @@ export const postGroup = async (req: Request, res: Response): Promise<void> => {
       },
     });
 
-    // Return updated group with linked calendar
     res.status(201).json({
       message: "Group created successfully",
-      group: { ...newGroup, calendar: createdCalendar },
+      group: { ...newGroup, calendar },
     });
   } catch (error: any) {
     console.error("Error creating group:", error);
@@ -123,21 +120,58 @@ export const postGroup = async (req: Request, res: Response): Promise<void> => {
 };
 
 
+
+
 // Delete Group
 export const deleteGroup = async (req: Request, res: Response): Promise<void> => {
   const { groupId } = req.params;
+
   try {
-    const group = await prisma.group.findUnique({ where: { id: Number(groupId) } });
+    const group = await prisma.group.findUnique({
+      where: { id: Number(groupId) },
+      include: { calendar: true },
+    });
+
     if (!group) {
       res.status(404).json({ message: "Group not found." });
       return;
     }
 
-    await prisma.groupMember.deleteMany({ where: { groupId: Number(groupId) } });
-    await prisma.group.delete({ where: { id: Number(groupId) } });
+    await prisma.$transaction(async (prisma) => {
+      // Step 1: Delete all group members
+      await prisma.groupMember.deleteMany({ where: { groupId: Number(groupId) } });
 
-    res.json({ message: "Group deleted successfully." });
-  } catch (error : any) {
+      // Step 2: Delete all event participants linked to this group's calendar
+      if (group.calendarId) {
+        await prisma.eventParticipant.deleteMany({
+          where: { event: { calendarId: group.calendarId } },
+        });
+
+        // Step 3: Delete all events linked to this group's calendar
+        await prisma.event.deleteMany({
+          where: { calendarId: group.calendarId },
+        });
+      }
+
+      // 🔹 Step 4: Delete the Group FIRST to remove the foreign key constraint
+      await prisma.group.delete({ where: { id: Number(groupId) } });
+
+      // 🔹 Step 5: Check if the calendar is still being used by another group
+      const otherGroupsUsingCalendar = await prisma.group.findFirst({
+        where: { calendarId: group.calendarId },
+      });
+
+      // 🔹 Step 6: If no other groups are using this calendar, delete it
+      if (!otherGroupsUsingCalendar && group.calendarId) {
+        await prisma.calendar.delete({
+          where: { id: group.calendarId },
+        });
+      }
+    });
+
+    res.json({ message: "Group and associated calendar deleted successfully." });
+  } catch (error: any) {
+    console.error("Error deleting group:", error);
     res.status(500).json({ message: `Error deleting group: ${error.message}` });
   }
 };

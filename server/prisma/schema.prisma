@@ -25,7 +25,6 @@ model User {
   name             String
   email            String    @unique
   cognitoId        String    @unique
-  friendId         String    @unique
   membershipId     Int
   membership       Membership @relation(fields: [membershipId], references: [id])
   calendarId       Int?
@@ -147,7 +146,7 @@ model Notification {
   id          Int      @id @default(autoincrement())
   receiver    Int
   sender    Int
-  type        String   // Event Invitation, Friend Request, Saving Plan Reminder
+  type        String   // Event Invitation, Friend Request, Saving Plan Reminder 
   status      String   // Accepted, Declined, None
   createdAt   DateTime @default(now())
   user        User     @relation(fields: [receiver], references: [id])
