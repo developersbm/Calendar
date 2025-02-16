@@ -36,8 +36,13 @@ export const getUser = async (req: Request, res: Response): Promise<void> => {
 // Create User
 export const postUser = async (req: Request, res: Response) => {
   try {
-    const { name, email, cognitoId } = req.body;
+    const { name, email, cognitoId, profilePicture } = req.body;
 
+    if (!name || !email || !cognitoId) {
+      return res.status(400).json({ message: "Missing required fields: name, email, or cognitoId" });
+    }
+
+    console.log("Creating new membership...");
     // Create a new Membership
     const newMembership = await prisma.membership.create({
       data: {
@@ -45,16 +50,24 @@ export const postUser = async (req: Request, res: Response) => {
       },
     });
 
-    // Create the User (without the calendarId for now)
+    console.log("Membership created with ID:", newMembership.id);
+
+    console.log("Creating new user...");
+    // Create the User
     const newUser = await prisma.user.create({
       data: {
         name,
         email,
         cognitoId,
         membershipId: newMembership.id,
+        profilePicture: profilePicture || null, // Ensure profile picture is handled
+        calendarId: null, // This will be updated later
       },
     });
 
+    console.log("User created with ID:", newUser.id);
+
+    console.log("Creating new calendar for user...");
     // Create a new Calendar for the user
     const newCalendar = await prisma.calendar.create({
       data: {
@@ -64,6 +77,9 @@ export const postUser = async (req: Request, res: Response) => {
       },
     });
 
+    console.log("Calendar created with ID:", newCalendar.id);
+
+    console.log("Updating user with calendar ID...");
     // Update the User with the calendarId
     const updatedUser = await prisma.user.update({
       where: { id: newUser.id },
@@ -71,6 +87,8 @@ export const postUser = async (req: Request, res: Response) => {
         calendarId: newCalendar.id,
       },
     });
+
+    console.log("User updated successfully!");
 
     res.status(201).json(updatedUser);
   } catch (error: any) {
