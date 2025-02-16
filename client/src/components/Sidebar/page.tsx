@@ -2,16 +2,17 @@
 
 import React, { useState } from "react";
 import {
-  Briefcase,
   ChevronDown,
   ChevronUp,
   Home,
   Layers3,
   LucideIcon,
-  Users,
   X,
   Search,
   LogOut,
+  CircleDollarSign,
+  CalendarDays,
+  UsersRound
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -21,8 +22,8 @@ import {
   useGetAuthUserQuery,
   useGetGroupMembersQuery,
   useGetGroupsQuery,
-  useGetTemplatesByUserQuery,
   useGetUserQuery,
+  useGetCelebrationPlansByUserQuery
 } from "@/state/api";
 import { useAppDispatch, useAppSelector } from "@/app/redux";
 import { setIsSidebarCollapsed } from "@/state";
@@ -30,7 +31,7 @@ import { signOut } from "aws-amplify/auth";
 
 const Sidebar = () => {
   const [showGroups, setShowGroups] = useState(true);
-  const [showTemplate, setShowTemplate] = useState(true);
+  const [showCelebrationPlans, setShowCelebrationPlans] = useState(true);
 
   const { data: authData } = useGetAuthUserQuery({});
   const userId = authData?.user?.userId;
@@ -41,7 +42,7 @@ const Sidebar = () => {
 
   const { data: groups, refetch: refetchSidebarGroups } = useGetGroupsQuery();
   const { data: groupMembers } = useGetGroupMembersQuery();
-  const { data: templates } = useGetTemplatesByUserQuery(userId ?? "", { skip: !userId });
+  const { data: celebrationPlans } = useGetCelebrationPlansByUserQuery(userId ?? "", { skip: !userId });
 
   const dispatch = useAppDispatch();
   const isSidebarCollapsed = useAppSelector(
@@ -58,7 +59,7 @@ const Sidebar = () => {
     ?.filter((gm) => gm.userId === user?.id && gm.status === "Active")
     .map((gm) => groups?.find((g) => g.id === gm.groupId)) || [];
 
-  const userTemplates = templates?.filter((tp) => tp.ownerId === user?.id) || [];
+  const userCelebrationPlans = celebrationPlans?.filter((cp) => cp.userId === user?.id) || [];
 
   const handleSignOut = async () => {
     try {
@@ -105,8 +106,8 @@ const Sidebar = () => {
         {/* NAVBAR LINKS */}
         <nav className="z-10 w-full">
           <SidebarLink icon={Home} label="Home" href="/" />
-          <SidebarLink icon={Briefcase} label="Calendar" href="/calendar" />
-          <SidebarLink icon={Users} label="Saving Plans" href="/savingPlans" />
+          <SidebarLink icon={CalendarDays} label="Calendar" href="/calendar" />
+          <SidebarLink icon={CircleDollarSign} label="Savings" href="/savingPlans" />
         </nav>
         
         {/* GROUPS */}
@@ -122,7 +123,7 @@ const Sidebar = () => {
             {userGroups.map((group) => (
               <SidebarLink
                 key={group?.id}
-                icon={Users}
+                icon={UsersRound}
                 label={group?.title || "Unnamed Group"}
                 href={`/group-calendar/${group?.id}`}
               />
@@ -137,30 +138,31 @@ const Sidebar = () => {
           </div>
         )}
 
-        {/* TEMPLATES */}
+
+        {/* Celebration Plans */}
         <button
-          onClick={() => setShowTemplate((prev) => !prev)}
+          onClick={() => setShowCelebrationPlans((prev) => !prev)}
           className="flex w-full items-center justify-between px-8 py-3 text-gray-500"
         >
-          <span>Templates</span>
-          {showTemplate ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+          <span>Celebration Plans</span>
+          {showCelebrationPlans ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
         </button>
-        {showTemplate && (
+        {showCelebrationPlans && (
           <div>
-            {userTemplates.map((template) => (
+            {userCelebrationPlans.map((plan) => (
               <SidebarLink
-                key={template.id}
+                key={plan.id}
                 icon={Layers3}
-                label={template.title || "Unnamed Template"}
-                href={`/template/${template.id}`}
+                label={plan.title || "Unnamed Plan"}
+                href={`/celebrationPlan/${plan.id}`}
               />
             ))}
             <Link
-              href="templates"
+              href="/celebrationPlans"
               className="flex w-full items-center gap-3 px-8 py-3 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               <Search className="h-6 w-6" />
-              <span className="font-medium">View Template</span>
+              <span className="font-medium">View Plans</span>
             </Link>
           </div>
         )}
@@ -177,6 +179,15 @@ const Sidebar = () => {
             </button>
           </div>
         )}
+
+
+      {/* About Us */}
+        <div className="mt-auto">
+          <button
+            className="flex w-full items-center gap-3 px-8 py-3 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+          ><Link href={"/aboutUs"}>About Us</Link>
+          </button>
+        </div>
       </div>
     </div>
   );

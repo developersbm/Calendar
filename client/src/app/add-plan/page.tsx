@@ -14,7 +14,7 @@ import {
   Edit2,
   CirclePlus,
 } from "lucide-react";
-import { useCreateTemplateMutation, useGetAuthUserQuery } from "@/state/api";
+import { useGetAuthUserQuery } from "@/state/api";
 
 interface EventOption {
   name: string;
@@ -28,7 +28,7 @@ interface DetailsData {
   };
 }
 
-const AddTemplate: React.FC = () => {
+const AddPlan: React.FC = () => {
   const [templateTitle, setTemplateTitle] = useState<string>("Click to edit event name");
   const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
   const [selectedOption, setSelectedOption] = useState<EventOption | null>(null);
@@ -54,7 +54,6 @@ const AddTemplate: React.FC = () => {
     
   const { data: authData } = useGetAuthUserQuery({});
   const userId = authData?.userDetails?.id;
-  const [createTemplate] = useCreateTemplateMutation();
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
 
   const eventOptions: EventOption[] = [
@@ -75,38 +74,6 @@ const AddTemplate: React.FC = () => {
         [fieldName]: value.toString(),
       },
     }));
-  };
-  
-  const handleAddTemplate = async () => {
-    if (!templateTitle.trim()) {
-      alert("Please enter a template name.");
-      return;
-    }
-  
-    if (!userId) {
-      alert("User not authenticated.");
-      return;
-    }
-  
-    const formattedElements: Record<string, string> = {};
-    Object.entries(detailsData).forEach(([category, fields]) => {
-      Object.entries(fields).forEach(([key, value]) => {
-        formattedElements[`${category} - ${key}`] = value.toString();
-      });
-    });
-  
-    try {
-      await createTemplate({
-        title: templateTitle,
-        description: "Custom event template",
-        ownerId: userId,
-        elements: formattedElements,
-      }).unwrap();
-      alert("Template added successfully!");
-    } catch (error) {
-      console.error("Error creating template:", error);
-      alert("Failed to add template.");
-    }
   };
   
   return (
@@ -220,21 +187,14 @@ const AddTemplate: React.FC = () => {
           <p className="font-bold text-gray-800 dark:text-white">Total Money</p>
           <p className="text-green-500 dark:text-green-400">${totalPrice.toFixed(2)}</p>
         </div>
-        <button className="flex items-center justify-center w-16 h-16 bg-blue-500 rounded-full hover:bg-blue-600 focus:outline-none">
-          <Share2 size={28} className="text-white" />
-        </button>
-        <button className="flex items-center justify-center w-16 h-16 bg-yellow-500 rounded-full hover:bg-yellow-600 focus:outline-none">
-          <Star size={28} className="text-white" />
-        </button>
         <button
-        onClick={handleAddTemplate}
-        className="flex items-center justify-center w-16 h-16 bg-green-500 rounded-full hover:bg-green-600 focus:outline-none"
+        className="flex items-center justify-center w-14 h-14 bg-green-500 rounded-full hover:bg-green-600 focus:outline-none"
       >
-        <CirclePlus size={28} className="text-white" />
+        <CirclePlus size={50} className="text-white" />
       </button>
       </div>
     </div>
   );
 };
 
-export default AddTemplate;
+export default AddPlan;

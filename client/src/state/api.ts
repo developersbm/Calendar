@@ -5,7 +5,7 @@ import {
   GroupMember,
   Calendar,
   Event,
-  Template,
+  CelebrationPlan,
   Transaction,
 } from "./interface";
 import { fetchAuthSession, getCurrentUser } from "aws-amplify/auth";
@@ -40,7 +40,7 @@ export const api = createApi({
     "Calendars",
     "Events",
     "Notifications",
-    "Templates",
+    "CelebrationPlans",
     "Transaction",
     "GroupMembers",
   ],
@@ -143,7 +143,6 @@ export const api = createApi({
     }),
     providesTags: ["GroupMembers"],
   }),
-  
 
     // Calendars (Calendar is creates as soon as user registers)
     getCalendars: build.query<Calendar[], void>({
@@ -188,38 +187,38 @@ export const api = createApi({
       invalidatesTags: ["Events"],
     }),
     
-    // Templates (CRUD)
+    // Celebration Plans (CRUD)
 
-    getTemplatesByUser: build.query<Template[], string>({
-      query: (userId) => `template/user/${userId}`,
-      providesTags: ["Templates"],
+    getCelebrationPlansByUser: build.query<CelebrationPlan[], string>({
+      query: (userId) => `celebrationPlan/user/${userId}`,
+      providesTags: ["CelebrationPlans"],
     }),
-    getTemplateById: build.query<Template, number>({
-      query: (id) => `template/${id}`,
-      providesTags: ["Templates"],
+    getCelebrationPlanById: build.query<CelebrationPlan, number>({
+      query: (id) => `celebrationPlan/${id}`,
+      providesTags: ["CelebrationPlans"],
     }),
-    createTemplate: build.mutation<Template, Partial<Template>>({
-      query: (template) => ({
-        url: "template",
+    createCelebrationPlan: build.mutation<CelebrationPlan, Partial<CelebrationPlan>>({
+      query: (plan) => ({
+        url: "celebrationPlan",
         method: "POST",
-        body: template,
+        body: plan,
       }),
-      invalidatesTags: ["Templates"],
+      invalidatesTags: ["CelebrationPlans"],
     }),
-    updateTemplate: build.mutation<Template, { id: number; data: Partial<Template> }>({
+    updateCelebrationPlan: build.mutation<CelebrationPlan, { id: number; data: Partial<CelebrationPlan> }>({
       query: ({ id, data }) => ({
-        url: `template/${id}`,
+        url: `celebrationPlan/${id}`,
         method: "PUT",
         body: data,
       }),
-      invalidatesTags: ["Templates"],
+      invalidatesTags: ["CelebrationPlans"],
     }),
-    deleteTemplate: build.mutation<void, number>({
+    deleteCelebrationPlan: build.mutation<void, number>({
       query: (id) => ({
-        url: `template/${id}`,
+        url: `celebrationPlan/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: ["Templates"],
+      invalidatesTags: ["CelebrationPlans"],
     }),
 
     // Saving Plans (CRUD)
@@ -233,6 +232,13 @@ export const api = createApi({
         url: "transaction",
         method: "POST",
         body: { userId, type, amount },
+      }),
+      invalidatesTags: ["Transaction"],
+    }),
+    deleteAllTransactions: build.mutation<void, number>({
+      query: (userId) => ({
+        url: `transaction/${userId}`,
+        method: "DELETE",
       }),
       invalidatesTags: ["Transaction"],
     }),
@@ -264,12 +270,13 @@ export const {
   useCreateEventMutation,
   useUpdateEventMutation,
 
-  useGetTemplateByIdQuery,
-  useGetTemplatesByUserQuery,
-  useCreateTemplateMutation,
-  useUpdateTemplateMutation,
-  useDeleteTemplateMutation,
+  useGetCelebrationPlansByUserQuery,
+  useGetCelebrationPlanByIdQuery,
+  useCreateCelebrationPlanMutation,
+  useUpdateCelebrationPlanMutation,
+  useDeleteCelebrationPlanMutation,
 
   useGetTransactionsQuery,
   useAddTransactionMutation,
+  useDeleteAllTransactionsMutation,
 } = api;

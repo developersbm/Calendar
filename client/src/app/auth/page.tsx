@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import AuthProvider from "../authProvider";
+import AuthProvider from "@/components/authProvider/page";
 import { signOut } from "aws-amplify/auth";
 
 const AuthPage = () => {

@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useGetAuthUserQuery, useGetUserQuery, useGetTemplatesByUserQuery } from "@/state/api";
-import Image from "next/image";
-import { ChevronUp, ChevronDown, Trash2, PlusCircle } from "lucide-react";
+import { useGetAuthUserQuery, useGetUserQuery, useGetCelebrationPlansByUserQuery } from "@/state/api";
+import { ChevronUp, ChevronDown, PlusCircle } from "lucide-react";
 
-const TemplateScreen = () => {
+const CelebrationPlanScreen = () => {
   const router = useRouter();
   const { data: authData } = useGetAuthUserQuery({});
   let userId = authData?.user.userId;
@@ -15,57 +14,57 @@ const TemplateScreen = () => {
     skip: !userId,
   });
 
-  const { data: templates } = useGetTemplatesByUserQuery(userId ?? "", {
+  const { data: celebrationPlans } = useGetCelebrationPlansByUserQuery(userId ?? "", {
     skip: !userId,
   });
 
-  const [expandedTemplates, setExpandedTemplates] = useState<Record<number, boolean>>({});
+  const [expandedPlans, setExpandedPlans] = useState<Record<number, boolean>>({});
 
-  const toggleTemplate = (templateId: number) => {
-    setExpandedTemplates((prev) => ({
+  const togglePlan = (planId: number) => {
+    setExpandedPlans((prev) => ({
       ...prev,
-      [templateId]: !prev[templateId],
+      [planId]: !prev[planId],
     }));
   };
 
   return (
     <div className="container mx-auto p-6 dark:bg-black dark:text-white">
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Your Templates</h1>
+        <h1 className="text-2xl font-bold">Your Celebration Plans</h1>
         <button
-          onClick={() => router.push("/add-template")}
+          onClick={() => router.push("/add-plan")}
           className="bg-blue-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-600 transition flex items-center gap-2"
         >
-          <PlusCircle className="w-5 h-5" /> Add Template
+          <PlusCircle className="w-5 h-5" /> Add Plan
         </button>
       </div>
 
-      {templates?.length === 0 ? (
-        <p className="text-gray-500 dark:text-gray-400">You have no templates.</p>
+      {celebrationPlans?.length === 0 ? (
+        <p className="text-gray-500 dark:text-gray-400">You have no celebration plans.</p>
       ) : (
-        templates?.map((template) => (
-          <div key={template.id} className="border rounded-lg p-4 mb-4 shadow-md bg-white dark:bg-gray-800 dark:border-gray-700">
+        celebrationPlans?.map((plan) => (
+          <div key={plan.id} className="border rounded-lg p-4 mb-4 shadow-md bg-white dark:bg-gray-800 dark:border-gray-700">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-xl font-semibold">{template.title}</h2>
+              <h2 className="text-xl font-semibold">{plan.title}</h2>
               <button
-                onClick={() => toggleTemplate(template.id)}
+                onClick={() => togglePlan(plan.id)}
                 className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
-                aria-label={`Toggle details for ${template.title}`}
+                aria-label={`Toggle details for ${plan.title}`}
               >
-                {expandedTemplates[template.id] ? (
+                {expandedPlans[plan.id] ? (
                   <ChevronUp className="h-5 w-5 text-gray-800 dark:text-gray-100" />
                 ) : (
                   <ChevronDown className="h-5 w-5 text-gray-800 dark:text-gray-100" />
                 )}
               </button>
             </div>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">{template.description}</p>
+            <p className="text-gray-600 dark:text-gray-300 mb-4">{plan.description}</p>
 
-            {expandedTemplates[template.id] && (
+            {expandedPlans[plan.id] && (
               <div>
                 <h3 className="text-lg font-medium mb-2">Details:</h3>
                 <pre className="bg-gray-100 dark:bg-gray-700 p-2 rounded text-sm text-gray-800 dark:text-white overflow-x-auto">
-                  {JSON.stringify(template.elements, null, 2)}
+                  {JSON.stringify(plan, null, 2)}
                 </pre>
               </div>
             )}
@@ -76,4 +75,4 @@ const TemplateScreen = () => {
   );
 };
 
-export default TemplateScreen;
+export default CelebrationPlanScreen;

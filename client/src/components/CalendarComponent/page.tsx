@@ -182,7 +182,7 @@ const CalendarComponent = () => {
     }
   }, [deleteEvent]);
 
-  const calendarClassNames = `w-[150vh] h-[60vh] ${
+  const calendarClassNames = `w-[170vh] ${
     isDarkMode ? "bg-black-300 text-white" : "bg-grey-300 text-black"
   }`;
 

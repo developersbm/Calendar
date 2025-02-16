@@ -11,8 +11,8 @@ import eventRoutes from "./routes/eventRoutes"
 import groupMemberRoutes from "./routes/groupMemberRoutes"
 import groupRoutes from "./routes/groupRoutes"
 import transactionRoutes from "./routes/transactionRoutes"
-import templateRoutes from "./routes/templateRoutes"
 import userRoutes from "./routes/userRoutes"
+import creatingPlanRoutes from "./routes/creatingPlanRoutes"
 
 /* CONFIGURATIONS */
 dotenv.config();
@@ -35,8 +35,8 @@ app.use("/eventParticipant", eventParticipant);
 app.use("/event", eventRoutes);
 app.use("/groupMember", groupMemberRoutes);
 app.use("/group", groupRoutes);
+app.use("/creatingPlanRoutes", creatingPlanRoutes)
 app.use("/transaction", transactionRoutes);
-app.use("/template", templateRoutes);
 app.use("/user", userRoutes);
 
 /* SERVER */

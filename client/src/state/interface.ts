@@ -79,16 +79,62 @@ export interface Membership {
     user?: User;
   }
   
-  export interface Template {
-    id: number;
-    title: string;
-    description?: string;
-    ownerId: number;
-    elements: Record<string, string>;
-    isActive: boolean;
-    createdAt: string;
-    updatedAt: string;
-    savingPlans?: SavingPlan[];
+    export interface CelebrationPlan {
+      id: number;
+      title: string;
+      description?: string;
+      userId: number;
+      user?: User;
+      date?: string;
+      budget?: number;
+      createdAt: string;
+      updatedAt: string;
+      members?: CelebrationPlanMember[];
+      venue?: Venue;
+      food?: Food;
+      decorator?: Decorator;
+      entertainment?: Entertainment;
+  }
+
+  export interface CelebrationPlanMember {
+      planId: number;
+      userId: number;
+      role: string; // Organizer, Guest, Vendor, etc.
+      status: string; // Pending, Accepted, Declined
+      plan?: CelebrationPlan;
+      user?: User;
+  }
+
+  export interface Venue {
+      id: number;
+      name: string;
+      location: string;
+      price: number;
+      celebrationPlan?: CelebrationPlan;
+  }
+
+  export interface Food {
+      id: number;
+      type: string;
+      items: Record<string, string>;
+      price: number;
+      celebrationPlan?: CelebrationPlan;
+  }
+
+  export interface Decorator {
+      id: number;
+      name: string;
+      theme?: string;
+      price: number;
+      celebrationPlan?: CelebrationPlan;
+  }
+
+  export interface Entertainment {
+      id: number;
+      name: string;
+      style: string;
+      price: number;
+      celebrationPlan?: CelebrationPlan;
   }
   
   export interface SavingPlan {
@@ -97,7 +143,6 @@ export interface Membership {
     goalAmount: number;
     currentBalance: number;
     frequency: string;
-    linkedTemplate?: Template;
     createdAt: string;
     updatedAt: string;
   }

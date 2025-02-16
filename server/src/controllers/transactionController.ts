@@ -44,3 +44,19 @@ export const addTransaction = async (req: Request, res: Response): Promise<void>
     res.status(500).json({ message: `Error adding transaction: ${error.message}` });
   }
 };
+
+// ✅ Clear all transactions for a user
+export const clearTransactions = async (req: Request, res: Response): Promise<void> => {
+  const { userId } = req.params;
+
+  try {
+    await prisma.transaction.deleteMany({
+      where: { ownerId: Number(userId) },
+    });
+
+    res.status(200).json({ message: "All transactions cleared successfully." });
+  } catch (error: any) {
+    console.error("Error clearing transactions:", error);
+    res.status(500).json({ message: `Error clearing transactions: ${error.message}` });
+  }
+};
