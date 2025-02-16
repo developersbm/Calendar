@@ -12,7 +12,7 @@ model Membership {
   id             Int       @id @default(autoincrement())
   type           String    // Free or Premium
   // maxFriends     Int    // Optionally remove if "friends" feature is no longer relevant
-  // maxTemplates   Int
+  // maxCelebrationPlan   Int
   // maxGroups      Int
   // maxSavingPlans Int
   users          User[]
@@ -35,8 +35,11 @@ model User {
 
   GroupMember      GroupMember[]
   EventParticipant EventParticipant[]
+  CelebrationPlanMember  CelebrationPlanMember[]
   Notification     Notification[]
   AuditLog         AuditLog[]
+
+  celebrationPlans       CelebrationPlan[]
 
   @@map("users")
 }
@@ -107,17 +110,86 @@ model EventParticipant {
   @@map("event_participants")
 }
 
-model Template {
-  id          Int       @id @default(autoincrement())
-  title       String
-  description String?
-  ownerId     Int
-  elements    Json
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+model CelebrationPlan {
+  id              Int       @id @default(autoincrement())
+  title           String
+  description     String?
+  userId          Int       // The user who owns this plan
+  user            User      @relation(fields: [userId], references: [id]) // FIX: Now has a reverse relation
+  date            DateTime?
 
-  @@map("templates")
+  venueId         Int?      @unique
+  venue           Venue?    @relation(fields: [venueId], references: [id])
+
+  foodId          Int?      @unique
+  food            Food?     @relation(fields: [foodId], references: [id])
+
+  decoratorId     Int?      @unique
+  decorator       Decorator? @relation(fields: [decoratorId], references: [id])
+
+  entertainmentId Int?      @unique
+  entertainment   Entertainment? @relation(fields: [entertainmentId], references: [id])
+
+  budget         Float?      // Total estimated budget
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  members        CelebrationPlanMember[] // Users associated with this plan
+
+  @@map("celebration_plans")
+}
+
+model CelebrationPlanMember {
+  planId   Int
+  userId   Int
+  role     String    // Organizer, Guest, Vendor, etc.
+  status   String    // Pending, Accepted, Declined
+
+  plan     CelebrationPlan @relation(fields: [planId], references: [id])
+  user     User            @relation(fields: [userId], references: [id])
+
+  @@id([planId, userId])
+  @@map("celebration_plan_members")
+}
+
+model Venue {
+  id        Int     @id @default(autoincrement())
+  name      String
+  location  String
+  price     Float
+  plan      CelebrationPlan?
+
+  @@map("venues")
+}
+
+model Food {
+  id        Int     @id @default(autoincrement())
+  type      String  // e.g., Buffet, Plated Dinner
+  items     Json    // List of food items
+  price     Float
+  plan      CelebrationPlan?
+
+  @@map("foods")
+}
+
+model Decorator {
+  id        Int     @id @default(autoincrement())
+  name      String
+  theme     String?
+  price     Float
+  plan      CelebrationPlan?
+
+  @@map("decorators")
+}
+
+model Entertainment {
+  id        Int     @id @default(autoincrement())
+  name      String
+  style     String  // DJ, Live Band, etc.
+  price     Float
+  plan      CelebrationPlan?
+
+  @@map("entertainment")
 }
 
 model SavingPlan {
