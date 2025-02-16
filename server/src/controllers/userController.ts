@@ -34,28 +34,39 @@ export const getUser = async (req: Request, res: Response): Promise<void> => {
 };
 
 // Create User
+
 export const postUser = async (req: Request, res: Response) => {
   try {
-    const { name, email, cognitoId } = req.body;
+    const { name, email, cognitoId, profilePicture } = req.body;
 
-    // Create a new Membership
-    const newMembership = await prisma.membership.create({
-      data: {
-        type: "Free", // Default membership type
-      },
+    // ✅ Check if the user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
     });
 
-    // Create the User (without the calendarId for now)
+    if (existingUser) {
+      console.log("⚠️ User already exists in database. Skipping creation.");
+       res.status(200).json(existingUser); // ✅ Return existing user instead of failing
+    }
+
+    console.log("Creating new membership...");
+    const newMembership = await prisma.membership.create({
+      data: { type: "Free" },
+    });
+
+    console.log("Creating new user...");
     const newUser = await prisma.user.create({
       data: {
         name,
         email,
         cognitoId,
         membershipId: newMembership.id,
+        profilePicture: profilePicture || null,
+        calendarId: null, // Will be updated after calendar creation
       },
     });
 
-    // Create a new Calendar for the user
+    console.log("Creating calendar...");
     const newCalendar = await prisma.calendar.create({
       data: {
         ownerId: newUser.id,
@@ -64,20 +75,17 @@ export const postUser = async (req: Request, res: Response) => {
       },
     });
 
-    // Update the User with the calendarId
+    console.log("Updating user with calendar ID...");
     const updatedUser = await prisma.user.update({
       where: { id: newUser.id },
-      data: {
-        calendarId: newCalendar.id,
-      },
+      data: { calendarId: newCalendar.id },
     });
 
-    res.status(201).json(updatedUser);
+    console.log(" User successfully created and updated.");
+   res.status(201).json(updatedUser);
   } catch (error: any) {
-    console.error("Error creating user:", error);
-    res.status(500).json({
-      message: `Error creating user: ${error.message}`,
-    });
+    console.error(" Error creating user:", error);
+   res.status(500).json({ message: `Error creating user: ${error.message}` });
   }
 };
 
