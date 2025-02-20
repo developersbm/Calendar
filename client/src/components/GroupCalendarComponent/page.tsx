@@ -66,16 +66,18 @@ const GroupCalendarComponent = ({ groupId }: { groupId: number }) => {
     )
   : [];
 
-
   const handleDateSelect = useCallback((selectInfo: DateSelectArg) => {
     console.log("Selected Date Info from FullCalendar:", selectInfo);
   
     const startDateTime = new Date(selectInfo.startStr);
     let endDateTime = new Date(selectInfo.endStr);
   
-    if (selectInfo.view.type === "dayGridMonth") {
-      endDateTime = new Date(startDateTime);
+    if (selectInfo.allDay) {
+      // FullCalendar treats end as exclusive, so subtract a day to match user intent
+      endDateTime.setDate(endDateTime.getDate() - 1);
     }
+  
+    console.log("Final Adjusted End DateTime:", endDateTime.toISOString());
   
     setSelectedDate({
       ...selectInfo,
@@ -83,9 +85,8 @@ const GroupCalendarComponent = ({ groupId }: { groupId: number }) => {
       endStr: endDateTime.toISOString(),
     });
   
-    setSelectedEvent(null); // Reset selected event
     setModalOpen(true);
-  }, []);  
+  }, []);
 
   const handleEventDrop = useCallback(async (dropInfo: EventDropArg) => {
     const { event } = dropInfo;
@@ -342,6 +343,18 @@ const GroupCalendarComponent = ({ groupId }: { groupId: number }) => {
     isDarkMode ? "bg-black-300 text-white dark-mode-calendar" : "bg-grey-300 text-black"
   }`;
 
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1000);
+    };
+
+    handleResize(); // Check on mount
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   return (
     <div className={calendarClassNames}>
       {isUserError && <p className="text-red-500">Failed to fetch user information.</p>}
@@ -367,6 +380,11 @@ const GroupCalendarComponent = ({ groupId }: { groupId: number }) => {
         longPressDelay={150}
         eventLongPressDelay={200}
         selectLongPressDelay={150}
+
+        height={isMobile ? "auto" : undefined}
+        contentHeight={isMobile ? "auto" : undefined}
+        aspectRatio={isMobile ? undefined : 1.5}
+        dayMaxEventRows={true}
       />
       <Modal
         isOpen={isModalOpen}

@@ -7,6 +7,9 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "PLAN IT",
+  icons: {
+    icon: "/mainLogo.png",
+  },
 };
 
 export default function RootLayout({

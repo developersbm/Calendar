@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -56,9 +56,12 @@ const CalendarComponent = () => {
     const startDateTime = new Date(selectInfo.startStr);
     let endDateTime = new Date(selectInfo.endStr);
   
-    if (selectInfo.view.type === "dayGridMonth") {
-      endDateTime = new Date(startDateTime);
+    if (selectInfo.allDay) {
+      // FullCalendar treats end as exclusive, so subtract a day to match user intent
+      endDateTime.setDate(endDateTime.getDate() - 1);
     }
+  
+    console.log("Final Adjusted End DateTime:", endDateTime.toISOString());
   
     setSelectedDate({
       ...selectInfo,
@@ -66,10 +69,10 @@ const CalendarComponent = () => {
       endStr: endDateTime.toISOString(),
     });
   
-    setSelectedEvent(null);
     setModalOpen(true);
-  }, []);  
-
+  }, []);
+  
+  
   const handleEventDrop = useCallback(async (dropInfo: EventDropArg) => {
     const { event } = dropInfo;
   
@@ -208,10 +211,21 @@ const CalendarComponent = () => {
 
   const allEvents = [...formattedEvents, ...formattedCelebrationPlans];
 
-  const calendarClassNames = `w-[150vh] h-[60vh] ${
+  const calendarClassNames = `w-[150vh] h-[80vh] ${
     isDarkMode ? "bg-black-300 text-white dark-mode-calendar" : "bg-grey-300 text-black"
   }`;
   
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1000);
+    };
+
+    handleResize(); // Check on mount
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   return (
     <div className={calendarClassNames}>
@@ -238,6 +252,11 @@ const CalendarComponent = () => {
         longPressDelay={150}
         eventLongPressDelay={200}
         selectLongPressDelay={150}
+
+        height={isMobile ? "auto" : undefined}
+        contentHeight={isMobile ? "auto" : undefined}
+        aspectRatio={isMobile ? undefined : 1.5}
+        dayMaxEventRows={true}
       />
       <Modal
         isOpen={isModalOpen}
