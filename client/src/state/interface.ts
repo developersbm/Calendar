@@ -78,22 +78,34 @@ export interface Membership {
     event?: Event;
     user?: User;
   }
-  
-    export interface CelebrationPlan {
-      id: number;
-      title: string;
-      description?: string;
-      userId: number;
-      user?: User;
-      date?: string;
-      budget?: number;
-      createdAt: string;
-      updatedAt: string;
-      members?: CelebrationPlanMember[];
-      venue?: Venue;
-      food?: Food;
-      decorator?: Decorator;
-      entertainment?: Entertainment;
+
+  export interface CelebrationPlan {
+    title: string;
+    description: string;
+    userId: number;
+    startTime: string;
+    endTime: string;
+    budget: number;
+    venue?: {
+      name: string;
+      location: string;
+      price: number;
+    };
+    food?: {
+      type: string;
+      items: string;
+      price: number;
+    };
+    decorator?: {
+      name: string;
+      theme: string;
+      price: number;
+    };
+    entertainment?: {
+      name: string;
+      style: string;
+      price: number;
+    };
   }
 
   export interface CelebrationPlanMember {

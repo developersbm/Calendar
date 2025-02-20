@@ -182,12 +182,14 @@ const Sidebar = () => {
 
 
       {/* About Us */}
-        <div className="mt-auto">
-          <button
-            className="flex w-full items-center gap-3 px-8 py-3 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
-          ><Link href={"/aboutUs"}>About Us</Link>
-          </button>
-        </div>
+      <div className="mt-auto">
+        <Link href="/aboutUs">
+            <button
+              className="flex w-full items-center gap-3 px-8 py-3 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >About Us
+            </button>
+        </Link>        
+      </div>
       </div>
     </div>
   );

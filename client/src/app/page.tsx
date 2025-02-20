@@ -31,15 +31,15 @@ export default function Home() {
             </Link>
           </div>
 
-          {/* Templates */}
+          {/* Celebration Plan */}
           <div className="text-center p-8 border rounded-xl shadow-lg bg-white dark:bg-gray-800">
             <Layers3 size={48} className="mx-auto text-green-500" />
-            <h3 className="mt-6 text-2xl font-semibold text-gray-800 dark:text-white">Templates</h3>
+            <h3 className="mt-6 text-2xl font-semibold text-gray-800 dark:text-white">Celebration Plan</h3>
             <p className="mt-3 text-lg text-gray-600 dark:text-gray-300">
-              Access pre-made templates for your events.
+              Access pre-made celebration plans for your events.
             </p>
-            <Link href="/templates" className="mt-6 inline-block text-blue-600 dark:text-blue-400 text-lg font-medium">
-              Explore Templates →
+            <Link href="/celebrationPlans" className="mt-6 inline-block text-blue-600 dark:text-blue-400 text-lg font-medium">
+              Explore Celebration Plan →
             </Link>
           </div>
 

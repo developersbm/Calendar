@@ -111,33 +111,33 @@ model EventParticipant {
 }
 
 model CelebrationPlan {
-  id              Int       @id @default(autoincrement())
-  title           String
-  description     String?
-  userId          Int       // The user who owns this plan
-  user            User      @relation(fields: [userId], references: [id]) // FIX: Now has a reverse relation
-  date            DateTime?
+    id              Int       @id @default(autoincrement())
+    title           String
+    description     String?
+    userId          Int
+    user            User      @relation(fields: [userId], references: [id])
+    startTime       DateTime
+    endTime         DateTime
+    budget         Float?
 
-  venueId         Int?      @unique
-  venue           Venue?    @relation(fields: [venueId], references: [id])
+    venueId         Int?      @unique
+    venue           Venue?    @relation(fields: [venueId], references: [id], onDelete: Cascade)
 
-  foodId          Int?      @unique
-  food            Food?     @relation(fields: [foodId], references: [id])
+    foodId          Int?      @unique
+    food            Food?     @relation(fields: [foodId], references: [id], onDelete: Cascade)
 
-  decoratorId     Int?      @unique
-  decorator       Decorator? @relation(fields: [decoratorId], references: [id])
+    decoratorId     Int?      @unique
+    decorator       Decorator? @relation(fields: [decoratorId], references: [id], onDelete: Cascade)
 
-  entertainmentId Int?      @unique
-  entertainment   Entertainment? @relation(fields: [entertainmentId], references: [id])
+    entertainmentId Int?      @unique
+    entertainment   Entertainment? @relation(fields: [entertainmentId], references: [id], onDelete: Cascade)
 
-  budget         Float?      // Total estimated budget
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+    members        CelebrationPlanMember[]
 
-  members        CelebrationPlanMember[] // Users associated with this plan
-
-  @@map("celebration_plans")
+    createdAt      DateTime    @default(now())
+    updatedAt      DateTime    @updatedAt
 }
+
 
 model CelebrationPlanMember {
   planId   Int

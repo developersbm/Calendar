@@ -7,6 +7,7 @@ import {
   Event,
   CelebrationPlan,
   Transaction,
+  CelebrationPlanMember
 } from "./interface";
 import { fetchAuthSession, getCurrentUser } from "aws-amplify/auth";
 
@@ -43,6 +44,7 @@ export const api = createApi({
     "CelebrationPlans",
     "Transaction",
     "GroupMembers",
+    "CelebrationPlanMembers",
   ],
   endpoints: (build) => ({
     // Memberships update (Free or Premium)
@@ -189,6 +191,10 @@ export const api = createApi({
     
     // Celebration Plans (CRUD)
 
+    getCelebrationPlanMembers: build.query<CelebrationPlanMember[], void>({
+      query: () => "celebrationPlanMember",
+      providesTags: ["CelebrationPlanMembers"],
+    }),
     getCelebrationPlansByUser: build.query<CelebrationPlan[], string>({
       query: (userId) => `celebrationPlan/user/${userId}`,
       providesTags: ["CelebrationPlans"],

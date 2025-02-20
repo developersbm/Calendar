@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import {
   Calendar,
@@ -9,12 +8,12 @@ import {
   Utensils,
   Paintbrush,
   Music,
-  Star,
-  Share2,
   Edit2,
   CirclePlus,
 } from "lucide-react";
-import { useGetAuthUserQuery } from "@/state/api";
+import { useGetAuthUserQuery, useCreateCelebrationPlanMutation, useGetUserQuery } from "@/state/api";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 interface EventOption {
   name: string;
@@ -29,51 +28,202 @@ interface DetailsData {
 }
 
 const AddPlan: React.FC = () => {
-  const [templateTitle, setTemplateTitle] = useState<string>("Click to edit event name");
+  const [templateTitle, setTemplateTitle] = useState<string>("Click to edit plan name");
   const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
-  const [selectedOption, setSelectedOption] = useState<EventOption | null>(null);
-  const [detailsData, setDetailsData] = useState<DetailsData>({});
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+  const [selectedOption, setSelectedOption] = useState<EventOption>({
+    name: "Date",
+    icon: <Calendar size={32} />,
+    fields: ["Event Date Start", "Event Date End"],
+  });
+  const [detailsData, setDetailsData] = useState<DetailsData>({});
+
+  const { data: authData } = useGetAuthUserQuery({});
+  const cognitoId = authData?.user?.userId;
+
+  const { data: user } = useGetUserQuery(cognitoId ?? "", {
+    skip: !cognitoId,
+  });
+
+  const userId = user?.id;
+  
+  const [createCelebrationPlan] = useCreateCelebrationPlanMutation();
+  const [disabledOptions, setDisabledOptions] = useState<{ [key: string]: boolean }>({});
 
   const handleTitleClick = () => {
+    if (templateTitle === "Click to edit plan name") {
+      setTemplateTitle("");
+    }
     setIsEditingTitle(true);
-    setTemplateTitle("");
   };
   
+
   const handleTitleBlur = () => {
     if (!templateTitle.trim()) {
-      setTemplateTitle("Click to edit event name");
+      setTemplateTitle("Click to edit plan name");
     }
     setIsEditingTitle(false);
   };
+
+  interface CelebrationPlan {
+    title: string;
+    description: string;
+    userId: number;
+    startTime: string;
+    endTime: string;
+    budget: number;
+    venue?: {
+      name: string;
+      location: string;
+      price: number;
+    };
+    food?: {
+      type: string;
+      items: string;
+      price: number;
+    };
+    decorator?: {
+      name: string;
+      theme: string;
+      price: number;
+    };
+    entertainment?: {
+      name: string;
+      style: string;
+      price: number;
+    };
+  }
+  
+  const handleSavePlan = async () => {
+    // Ensure only the event name and dates are required
+    if (!templateTitle.trim() || !startDate || !endDate) {
+      alert("Please enter the event name and select both start and end dates.");
+      return;
+    }
+  
+    let calculatedTotalPrice = 0;
+  
+    // Calculate total price only for included options
+    Object.keys(detailsData).forEach((key) => {
+      if (!disabledOptions[key] && detailsData[key]["Price"]) {
+        calculatedTotalPrice += Number(detailsData[key]["Price"]) || 0;
+      }
+    });
+  
+    setTotalPrice(calculatedTotalPrice);
+  
+    // Construct planData without including disabled options
+    const planData: CelebrationPlan = {
+      title: templateTitle.trim(),
+      userId,
+      startTime: startDate.toISOString(),
+      endTime: endDate.toISOString(),
+      budget: calculatedTotalPrice || 0, // Set budget to 0 if no price is included
+    };
+  
+    // Only include optional fields if they are NOT disabled
+    if (!disabledOptions["Venue"] && detailsData["Venue"]) {
+      planData.venue = {
+        name: String(detailsData["Venue"]["Venue Details"] || ""),
+        location: String(detailsData["Venue"]["Location"] || ""),
+        price: Number(detailsData["Venue"]["Price"] || 0),
+      };
+    }
+  
+    if (!disabledOptions["Food"] && detailsData["Food"]) {
+      planData.food = {
+        type: String(detailsData["Food"]["Food Details"] || ""),
+        items: String(detailsData["Food"]["Items"] || ""),
+        price: Number(detailsData["Food"]["Price"] || 0),
+      };
+    }
+  
+    if (!disabledOptions["Decorator"] && detailsData["Decorator"]) {
+      planData.decorator = {
+        name: String(detailsData["Decorator"]["Decorator Details"] || ""),
+        theme: String(detailsData["Decorator"]["Theme"] || ""),
+        price: Number(detailsData["Decorator"]["Price"] || 0),
+      };
+    }
+  
+    if (!disabledOptions["Host/DJ"] && detailsData["Host/DJ"]) {
+      planData.entertainment = {
+        name: String(detailsData["Host/DJ"]["Host/DJ Details"] || ""),
+        style: String(detailsData["Host/DJ"]["Style"] || ""),
+        price: Number(detailsData["Host/DJ"]["Price"] || 0),
+      };
+    }
+  
+    console.log("Submitting Plan Data:", planData);
+  
+    try {
+      await createCelebrationPlan(planData).unwrap();
+      alert("Celebration plan saved successfully!");
+    } catch (error) {
+      console.error("Error saving celebration plan:", error);
+      alert("Failed to save the celebration plan.");
+    }
+  };  
   
 
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => setTemplateTitle(e.target.value);
-    
-  const { data: authData } = useGetAuthUserQuery({});
-  const userId = authData?.userDetails?.id;
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
 
   const eventOptions: EventOption[] = [
-    { name: "Date", icon: <Calendar size={32} />, fields: ["Event Date"] },
-    { name: "Venue", icon: <MapPin size={32} />, fields: ["Venue Name", "Location", "Price"] },
-    { name: "Food", icon: <Utensils size={32} />, fields: ["Food Type", "Menu Items", "Price"] },
-    { name: "Decorator", icon: <Paintbrush size={32} />, fields: ["Decorator Name", "Theme", "Price"] },
-    { name: "Host/DJ", icon: <Music size={32} />, fields: ["Host/DJ Name", "Playlist Style", "Price"] },
+    { name: "Date", icon: <Calendar size={32} />, fields: ["Event Date Start", "Event Date End"] },
+    { name: "Venue", icon: <MapPin size={32} />, fields: ["Venue Details", "Location", "Price"] },
+    { name: "Food", icon: <Utensils size={32} />, fields: ["Food Details", "Items", "Price"] },
+    { name: "Decorator", icon: <Paintbrush size={32} />, fields: ["Decorator Details", "Theme", "Price"] },
+    { name: "Host/DJ", icon: <Music size={32} />, fields: ["Host/DJ Details", "Style", "Price"] },
   ];
 
   const handleOptionClick = (option: EventOption) => setSelectedOption(option);
 
   const handleFieldChange = (fieldName: string, value: string) => {
-    setDetailsData((prev) => ({
+    setDetailsData((prev) => {
+      const newData = {
+        ...prev,
+        [selectedOption!.name]: {
+          ...prev[selectedOption!.name],
+          [fieldName]: value.toString(),
+        },
+      };
+  
+      // Dynamically update total price when a "Price" field is updated
+      let newTotalPrice = 0;
+      Object.keys(newData).forEach((category) => {
+        if (!disabledOptions[category] && newData[category]["Price"]) {
+          newTotalPrice += Number(newData[category]["Price"]) || 0;
+        }
+      });
+  
+      setTotalPrice(newTotalPrice);
+      return newData;
+    });
+  };
+   
+  const handleCheckboxChange = (optionName: string) => {
+    setDisabledOptions((prev) => ({
       ...prev,
-      [selectedOption!.name]: {
-        ...prev[selectedOption!.name],
-        [fieldName]: value.toString(),
-      },
+      [optionName]: !prev[optionName],
     }));
+  
+    setDetailsData((prev) => {
+      const newData = { ...prev };
+  
+      if (!disabledOptions[optionName]) {
+        // Remove the option if disabled
+        delete newData[optionName];
+  
+        // Update total price by removing the disabled option
+        const priceToSubtract = Number(prev[optionName]?.["Price"]) || 0;
+        setTotalPrice((prevTotal) => prevTotal - priceToSubtract);
+      }
+  
+      return newData;
+    });
   };
   
   return (
@@ -106,7 +256,7 @@ const AddPlan: React.FC = () => {
               <input
                 type="text"
                 value={templateTitle}
-                onChange={handleTitleChange}
+                onChange={(e) => setTemplateTitle(e.target.value)}
                 onBlur={handleTitleBlur}
                 className="text-center text-2xl font-bold bg-transparent border-b-2 border-blue-500 focus:outline-none dark:text-white"
                 autoFocus
@@ -144,54 +294,87 @@ const AddPlan: React.FC = () => {
             ))}
           </div>
 
-          {/* Selected Option Details */}
-          {selectedOption && (
-            <div className="w-full max-w-md mt-6 mx-auto p-4 border rounded bg-white dark:bg-gray-800 dark:text-white">
-              <h2 className="text-lg font-bold mb-4">{selectedOption.name} Details</h2>
-              {selectedOption.name === "Date" ? (
-                <div className="mb-4">
-                  <label className="block mb-2 text-sm font-medium">Event Date</label>
-                  <DatePicker
-                    selected={selectedDate}
-                    onChange={(date: Date | null) => setSelectedDate(date)}
-                    className="block w-full p-2 border rounded dark:bg-gray-700 dark:text-white"
-                    placeholderText="Select a date"
-                  />
-                </div>
-              ) : (
-                selectedOption.fields.map((field, index) => (
-                  <div key={index} className="mb-4">
-                    <label className="block mb-2 text-sm font-medium">{field}</label>
-                    <input
-                      type={field === "Price" ? "number" : "text"}
-                      value={detailsData[selectedOption.name]?.[field] || ""}
-                      onChange={(e) => handleFieldChange(field, e.target.value)}
-                      className="block w-full p-2 border rounded dark:bg-gray-700 dark:text-white"
-                      placeholder={`Enter ${field.toLowerCase()}`}
-                    />
-                  </div>
-                ))
-              )}
-            </div>
-          )}
+          {/* Selected Option Details */}{/* Selected Option Details */}
+{selectedOption && (
+  <div className="w-full max-w-md mt-6 mx-auto p-4 border rounded bg-white dark:bg-gray-800 dark:text-white">
+    {selectedOption.name === "Date" ? (
+      <>
+        {/* Start Date */}
+        <div className="mb-4">
+          <label className="block mb-2 text-sm font-medium">Event Date Start</label>
+          <DatePicker
+            selected={startDate}
+            onChange={(date: Date | null) => setStartDate(date)}
+            dateFormat="yyyy-MM-dd"
+            className="block w-full p-2 border rounded dark:bg-gray-700 dark:text-white"
+            placeholderText="Select start date"
+          />
         </div>
-      </div>
 
-      {/* Bottom Menu */}
-      <div
-        className={`fixed bottom-0 h-16 bg-gray-200 dark:bg-gray-900 w-full flex justify-around items-center z-10 transition-all duration-300 ${
-          isSidebarOpen ? "pl-64" : ""
-        }`}
-      >
-        <div className="text-center">
-          <p className="font-bold text-gray-800 dark:text-white">Total Money</p>
-          <p className="text-green-500 dark:text-green-400">${totalPrice.toFixed(2)}</p>
+        {/* End Date */}
+        <div className="mb-4">
+          <label className="block mb-2 text-sm font-medium">Event Date End</label>
+          <DatePicker
+            selected={endDate}
+            onChange={(date: Date | null) => setEndDate(date)}
+            dateFormat="yyyy-MM-dd"
+            className="block w-full p-2 border rounded dark:bg-gray-700 dark:text-white"
+            placeholderText="Select end date"
+          />
         </div>
-        <button
-        className="flex items-center justify-center w-14 h-14 bg-green-500 rounded-full hover:bg-green-600 focus:outline-none"
-      >
-        <CirclePlus size={50} className="text-white" />
-      </button>
+      </>
+    ) : (
+      <>
+        {/* Inputs for Other Options */}
+        {selectedOption.fields.map((field, index) => (
+          <div key={index} className="mb-4">
+            <label className="block mb-2 text-sm font-medium">{field}</label>
+            <input
+              type={field === "Price" ? "number" : "text"}
+              value={detailsData[selectedOption.name]?.[field] || ""}
+              onChange={(e) => handleFieldChange(field, e.target.value)}
+              className="block w-full p-2 border rounded dark:bg-gray-700 dark:text-white"
+              placeholder={`Enter ${field.toLowerCase()}`}
+              disabled={disabledOptions[selectedOption.name]}
+            />
+          </div>
+        ))}
+
+        {/* Show "Do not include this" checkbox only for non-Date options */}
+        {selectedOption.name !== "Date" && (
+          <div className="mb-4 flex items-center space-x-2">
+            <input
+              className="w-5 h-5 cursor-pointer"
+              type="checkbox"
+              checked={!!disabledOptions[selectedOption.name]}
+              onChange={() => handleCheckboxChange(selectedOption.name)}
+            />
+            <label className="text-sm font-medium">Do not include this</label>
+          </div>
+        )}
+      </>
+    )}
+  </div>
+)}
+
+          {/* Bottom Menu */}
+          <div
+            className={`fixed bottom-0 h-16 bg-gray-200 dark:bg-gray-900 w-full flex justify-around items-center z-10 transition-all duration-300 ${
+              isSidebarOpen ? "pl-64" : ""
+            }`}
+          >
+            <div className="text-center">
+              <p className="font-bold text-gray-800 dark:text-white">Total Money</p>
+              <p className="text-green-500 dark:text-green-400">${totalPrice.toFixed(2)}</p>
+            </div>
+            <button
+              onClick={handleSavePlan}
+              className="flex items-center justify-center w-14 h-14 bg-green-500 rounded-full hover:bg-green-600 focus:outline-none"
+            >
+              <CirclePlus size={50} className="text-white" />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

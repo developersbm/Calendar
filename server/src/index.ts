@@ -35,7 +35,7 @@ app.use("/eventParticipant", eventParticipant);
 app.use("/event", eventRoutes);
 app.use("/groupMember", groupMemberRoutes);
 app.use("/group", groupRoutes);
-app.use("/creatingPlanRoutes", creatingPlanRoutes)
+app.use("/celebrationPlan", creatingPlanRoutes)
 app.use("/transaction", transactionRoutes);
 app.use("/user", userRoutes);
 
