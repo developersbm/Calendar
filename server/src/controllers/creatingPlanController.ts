@@ -9,9 +9,17 @@ export const getCelebrationPlansByUser = async (req: Request, res: Response): Pr
     
     try {
         const plans = await prisma.celebrationPlan.findMany({
-            where: { userId: Number(userId) },
+            where: {
+                OR: [
+                    { userId: Number(userId) }, // Fetch plans where the user is the creator
+                    { members: { some: { userId: Number(userId) } } }, // Fetch plans where the user is a member
+                ],
+            },
+            include: {
+                members: { include: { user: true } }, // Include member details
+            },
             orderBy: { createdAt: "desc" },
-        });
+        });              
         res.json(plans);
     } catch (error: any) {
         console.error("Error fetching celebration plans:", error);
@@ -27,12 +35,17 @@ export const getCelebrationPlanById = async (req: Request, res: Response): Promi
         const plan = await prisma.celebrationPlan.findUnique({
             where: { id: Number(id) },
             include: {
-                venue: true,         // Fetch venue details
-                food: true,          // Fetch food details
-                decorator: true,     // Fetch decorator details
-                entertainment: true, // Fetch entertainment details
-            }
-        });
+                venue: true,
+                food: true,
+                decorator: true,
+                entertainment: true,
+                members: {
+                    include: {
+                        user: true,
+                    },
+                },
+            },
+        });        
 
         if (!plan) {
             res.status(404).json({ message: "Celebration plan not found" });

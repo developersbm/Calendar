@@ -2,7 +2,7 @@
 
 import React from "react";
 import Image, { StaticImageData } from "next/image";
-
+import { Linkedin } from "lucide-react";
 // Dummy images (Replace with actual images if available)
 import profile from "../../../public/profile.png";
 import sbm from "../../../public/sbm.jpg";
@@ -28,6 +28,7 @@ const AboutPage = () => {
             name="Sebastian Bastida Marin"
             role="Developer"
             description="Sebastian is the sole developer behind Plan It, ensuring smooth performance and great features."
+            linkedin="https://www.linkedin.com/in/sebastian-bastida/"
           />
 
           {/* Marketing Team Member 1 */}
@@ -53,12 +54,36 @@ const AboutPage = () => {
 };
 
 /* Team Member Card Component */
-const TeamMemberCard = ({ image, name, role, description }: { image: StaticImageData | string; name: string; role: string; description: string }) => (
+const TeamMemberCard = ({ 
+  image, 
+  name, 
+  role, 
+  description, 
+  linkedin 
+}: { 
+  image: StaticImageData | string; 
+  name: string; 
+  role: string; 
+  description: string; 
+  linkedin?: string;
+}) => (
   <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg text-center">
     <Image src={image} alt={name} width={120} height={120} className="rounded-full mx-auto mb-4" />
     <h3 className="text-xl font-semibold">{name}</h3>
     <p className="text-gray-500 dark:text-gray-400">{role}</p>
     <p className="mt-2 text-gray-600 dark:text-gray-300">{description}</p>
+
+    {/* LinkedIn Icon (Shown Only If `linkedin` Exists) */}
+    {linkedin && (
+      <a 
+        href={linkedin} 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        className="inline-block mt-4 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition"
+      >
+        <Linkedin size={30} />
+      </a>
+    )}
   </div>
 );
 

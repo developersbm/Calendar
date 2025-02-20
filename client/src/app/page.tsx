@@ -12,7 +12,7 @@ export default function Home() {
           Welcome to Plan It!
         </h1>
         <p className="mt-6 text-xl text-gray-600 dark:text-gray-300">
-          Your one-stop solution for organizing events, saving plans, and more.
+          Your one-stop solution for organizing plans, keeping track of events with a calendar, saving plans, and more.
         </p>
       </section>
 
@@ -36,7 +36,7 @@ export default function Home() {
             <PartyPopper size={48} className="mx-auto text-green-500" />
             <h3 className="mt-6 text-2xl font-semibold text-gray-800 dark:text-white">Celebration Plan</h3>
             <p className="mt-3 text-lg text-gray-600 dark:text-gray-300">
-              Access pre-made celebration plans for your events.
+              Access celebration plans for your events and add participants!
             </p>
             <Link href="/celebrationPlans" className="mt-6 inline-block text-blue-600 dark:text-blue-400 text-lg font-medium">
               Explore Celebration Plan →
@@ -48,7 +48,7 @@ export default function Home() {
             <Users size={48} className="mx-auto text-purple-500" />
             <h3 className="mt-6 text-2xl font-semibold text-gray-800 dark:text-white">Groups</h3>
             <p className="mt-3 text-lg text-gray-600 dark:text-gray-300">
-              Join or create groups for collaboration and shared events.
+              Join or create groups for collaboration and shared calendars.
             </p>
             <Link href="/groups" className="mt-6 inline-block text-blue-600 dark:text-blue-400 text-lg font-medium">
               Join Groups →

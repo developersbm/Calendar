@@ -52,19 +52,23 @@ const CalendarComponent = () => {
 
   const handleDateSelect = useCallback((selectInfo: DateSelectArg) => {
     console.log("Selected Date Info from FullCalendar:", selectInfo);
-
+  
     const startDateTime = new Date(selectInfo.startStr);
-    const endDateTime = new Date(selectInfo.endStr);
-
+    let endDateTime = new Date(selectInfo.endStr);
+  
+    if (selectInfo.view.type === "dayGridMonth") {
+      endDateTime = new Date(startDateTime);
+    }
+  
     setSelectedDate({
       ...selectInfo,
       startStr: startDateTime.toISOString(),
       endStr: endDateTime.toISOString(),
     });
-
-    setSelectedEvent(null); // Reset selected event
+  
+    setSelectedEvent(null);
     setModalOpen(true);
-  }, []);
+  }, []);  
 
   const handleEventDrop = useCallback(async (dropInfo: EventDropArg) => {
     const { event } = dropInfo;

@@ -12,7 +12,7 @@ import groupMemberRoutes from "./routes/groupMemberRoutes"
 import groupRoutes from "./routes/groupRoutes"
 import transactionRoutes from "./routes/transactionRoutes"
 import userRoutes from "./routes/userRoutes"
-import creatingPlanRoutes from "./routes/creatingPlanRoutes"
+import celebrationPlanRoutes from "./routes/celebrationPlanRoutes"
 import celebrationPlanMemberRoutes from "./routes/celebrationPlanMemberRoutes"
 /* CONFIGURATIONS */
 dotenv.config();
@@ -35,7 +35,7 @@ app.use("/eventParticipant", eventParticipant);
 app.use("/event", eventRoutes);
 app.use("/groupMember", groupMemberRoutes);
 app.use("/group", groupRoutes);
-app.use("/celebrationPlan", creatingPlanRoutes)
+app.use("/celebrationPlan", celebrationPlanRoutes)
 app.use("/transaction", transactionRoutes);
 app.use("/user", userRoutes);
 app.use("/celebrationPlanMember", celebrationPlanMemberRoutes);

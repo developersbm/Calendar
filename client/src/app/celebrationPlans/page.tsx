@@ -101,50 +101,44 @@ const CelebrationPlansPage = () => {
   }, [allCelebrationPlans]);
   
   const togglePlan = async (planId: number) => {
-    setExpandedPlans((prev) => {
-      const isCurrentlyExpanded = prev[planId];
+    setExpandedPlans((prev) => ({
+      ...prev,
+      [planId]: !prev[planId],
+    }));
   
-      // If it's expanded, collapse it and return early
-      if (isCurrentlyExpanded) {
-        return { ...prev, [planId]: false };
-      }
+    if (!expandedPlans[planId]) {
+      await fetchMembersForPlan(planId);
+      await fetchPlanDetails(planId);
+    }
+  };
   
-      // Otherwise, expand it and fetch details if needed
-      return { ...prev, [planId]: true };
-    });
-  
-    // If the plan is already expanded and is being collapsed, stop here
-    if (expandedPlans[planId]) return;
-  
+  const fetchPlanDetails = async (planId: number) => {
     try {
-      // Fetch members if not already loaded
-      if (!membersByPlan[planId]) {
-        const membersUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/celebrationPlanMember/${planId}/members`;
-        const response = await fetch(membersUrl);
-        if (response.ok) {
-          const members = await response.json();
-          setMembersByPlan((prev) => ({ ...prev, [planId]: members }));
-        } else {
-          console.error("Error fetching members:", response.statusText);
-        }
-      }
-  
-      // Fetch plan details if not already loaded
-      if (!planDetailsById[planId]) {
-        const planDetailsUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/celebrationPlan/${planId}`;
-        const response = await fetch(planDetailsUrl);
-        if (response.ok) {
-          const planDetails = await response.json();
-          setPlanDetailsById((prev) => ({ ...prev, [planId]: planDetails }));
-        } else {
-          console.error("Error fetching plan details:", response.statusText);
-        }
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/celebrationPlan/${planId}`);
+      if (response.ok) {
+        const planDetails = await response.json();
+        setPlanDetailsById((prev) => ({ ...prev, [planId]: planDetails }));
+      } else {
+        console.error("Error fetching plan details:", response.statusText);
       }
     } catch (error) {
       console.error("Network error:", error);
     }
   };
-  
+
+  const fetchMembersForPlan = async (planId: number) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/celebrationPlanMember/${planId}/members`);
+      if (response.ok) {
+        const members = await response.json();
+        setMembersByPlan((prev) => ({ ...prev, [planId]: members }));
+      } else {
+        console.error("Error fetching members:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Network error:", error);
+    }
+  };  
 
   const toggleAddMember = (planId: number) => {
     setAddMemberPlan((prev) => (prev === planId ? null : planId));
@@ -157,18 +151,19 @@ const CelebrationPlansPage = () => {
       await addMember({ planId, email, role: "Participant" }).unwrap();
       setAddMemberPlan(null);
       setEmail("");
-      togglePlan(planId); // Refresh member list
+  
+      await refetchCelebrationPlans();
+      await fetchMembersForPlan(planId);
     } catch (error) {
       console.error("Error adding member:", error);
       alert("Failed to add member.");
     }
-  };
+  };  
 
   const handleDeletePlan = async (planId: number) => {
     if (!confirm("Are you sure you want to delete this celebration plan?")) return;
     try {
       await deletePlan(planId).unwrap();
-      alert("Celebration plan deleted successfully!");
       refetchCelebrationPlans();
     } catch (error: any) {
       console.error("Error deleting plan:", error);
@@ -180,13 +175,14 @@ const CelebrationPlansPage = () => {
     if (!confirm("Are you sure you want to remove this member?")) return;
     try {
       await removeMember({ planId, userId: memberId }).unwrap();
-      alert("Member removed successfully!");
-      togglePlan(planId); // Refresh member list
+  
+      await refetchCelebrationPlans();
+      await fetchMembersForPlan(planId);
     } catch (error) {
       console.error("Error removing member:", error);
       alert("Failed to remove member.");
     }
-  };
+  };  
 
   if (isAuthLoading || isUserLoading || isPlansLoading) {
     return <p className="text-center text-gray-500">Loading your celebration plans...</p>;

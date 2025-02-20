@@ -38,55 +38,64 @@ const GroupCalendarComponent = ({ groupId }: { groupId: number }) => {
   const { refetch } = useGetEventCalendarQuery(user?.calendarId as number, { skip: !user?.calendarId });
   
   const memberColors = useMemo(() => {
-    const colors = [
-      "#bd1c14", "#21bd14", "#085090", "#370890", "#900871",
-    ];
+    const colors = ["#bd1c14", "#21bd14", "#085090", "#370890", "#900871"];
     const assignedColors: Record<number, string> = {};
-
+  
     groupMembers?.forEach((member, index) => {
       assignedColors[member.userId] = colors[index % colors.length];
     });
-
+  
     return assignedColors;
-  }, [groupMembers]);
+  }, [groupMembers]);  
 
   // 🎯 Combine and format all events
   const allGroupEvents = groupMembers
-    ? groupMembers.flatMap((member) =>
-        member.events?.map((event) => ({
-          id: event.id.toString(),
-          title: `${member.name} - ${event.title}`, // Add member name next to the event title
-          start: new Date(event.startTime).toISOString(),
-          end: new Date(event.endTime).toISOString(),
-          extendedProps: {
-            description: event.description,
-            recurrence: event.recurrence,
-            participants: event.participants,
-          },
-          color: memberColors[member.userId], // Assign unique color
-        })) || []
-      )
-    : [];
+  ? groupMembers.flatMap((member) =>
+      member.events?.map((event) => ({
+        id: event.id.toString(),
+        title: `${member.name} - ${event.title}`,
+        start: new Date(event.startTime).toISOString(),
+        end: new Date(event.endTime).toISOString(),
+        color: memberColors[member.userId],
+        extendedProps: {
+          description: event.description,
+          recurrence: event.recurrence,
+          participants: event.participants,
+        },
+      })) || []
+    )
+  : [];
 
 
   const handleDateSelect = useCallback((selectInfo: DateSelectArg) => {
     console.log("Selected Date Info from FullCalendar:", selectInfo);
-
+  
     const startDateTime = new Date(selectInfo.startStr);
-    const endDateTime = new Date(selectInfo.endStr);
-
+    let endDateTime = new Date(selectInfo.endStr);
+  
+    if (selectInfo.view.type === "dayGridMonth") {
+      endDateTime = new Date(startDateTime);
+    }
+  
     setSelectedDate({
       ...selectInfo,
       startStr: startDateTime.toISOString(),
       endStr: endDateTime.toISOString(),
     });
-
+  
     setSelectedEvent(null); // Reset selected event
     setModalOpen(true);
-  }, []);
+  }, []);  
 
   const handleEventDrop = useCallback(async (dropInfo: EventDropArg) => {
     const { event } = dropInfo;
+    const eventOwnerId = event.extendedProps?.ownerId;
+  
+    if (eventOwnerId !== user?.id) {
+      alert("You can only edit your own events.");
+      dropInfo.revert(); // Revert the drop
+      return;
+    }
   
     if (!event.start) {
       console.error("Event start date is null, cannot update event.");
@@ -108,10 +117,17 @@ const GroupCalendarComponent = ({ groupId }: { groupId: number }) => {
       console.error("Failed to update event:", error);
       alert("Failed to update event. Please try again.");
     }
-  }, [updateEvent]);  
+  }, [updateEvent, user?.id]);
 
   const handleEventResize = useCallback(async (resizeInfo: EventResizeDoneArg) => {
     const { event } = resizeInfo;
+    const eventOwnerId = event.extendedProps?.ownerId;
+  
+    if (eventOwnerId !== user?.id) {
+      alert("You can only edit your own events.");
+      resizeInfo.revert(); // Revert the resize
+      return;
+    }
   
     if (!event.start || !event.end) {
       console.error("Event start or end date is null, cannot update event.");
@@ -133,7 +149,8 @@ const GroupCalendarComponent = ({ groupId }: { groupId: number }) => {
       console.error("Failed to update event:", error);
       alert("Failed to update event. Please try again.");
     }
-  }, [updateEvent]);
+  }, [updateEvent, user?.id]);
+  
   
 
   const handleModalSubmit = async ({
@@ -189,6 +206,13 @@ const GroupCalendarComponent = ({ groupId }: { groupId: number }) => {
   
 
   const handleEventDelete = useCallback(async (clickInfo: EventClickArg) => {
+    const isCelebrationPlanEvent = clickInfo.event.id.startsWith("plan-");
+  
+    if (isCelebrationPlanEvent) {
+      alert("You cannot delete celebration plan events.");
+      return;
+    }
+  
     if (window.confirm(`Delete event "${clickInfo.event.title}"?`)) {
       try {
         console.log("Deleting event:", clickInfo.event.id);
@@ -221,16 +245,22 @@ const GroupCalendarComponent = ({ groupId }: { groupId: number }) => {
               return { userId: null, plans: [] };
             }
   
-            const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/celebrationPlans/${member.userId}`;
+            const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/celebrationPlan/user/${member.userId}`;
             console.log(`Fetching celebration plans for user ${member.userId} from: ${apiUrl}`);
   
-            const response = await fetch(apiUrl);
-            if (!response.ok) {
-              throw new Error(`Failed to fetch celebration plans for user ${member.userId}: ${response.statusText}`);
-            }
+            try {
+              const response = await fetch(apiUrl);
+              if (!response.ok) {
+                console.warn(`Failed to fetch celebration plans for user ${member.userId}: ${response.statusText}`);
+                return { userId: member.userId, plans: [] }; // Handle failure without stopping execution
+              }
   
-            const plansData = await response.json();
-            return { userId: member.userId, plans: plansData };
+              const plansData = await response.json();
+              return { userId: member.userId, plans: plansData };
+            } catch (fetchError) {
+              console.error(`Network error while fetching celebration plans for user ${member.userId}:`, fetchError);
+              return { userId: member.userId, plans: [] };
+            }
           })
         );
   
@@ -248,32 +278,64 @@ const GroupCalendarComponent = ({ groupId }: { groupId: number }) => {
     };
   
     fetchCelebrationPlans();
-  }, [groupMembers]);
-  
+  }, [groupMembers]);  
+
   
   const allCelebrationPlans = useMemo(() => {
     return Object.values(celebrationPlansResults).flat();
   }, [celebrationPlansResults]);  
   
-  
   const formattedCelebrationPlans = useMemo(() => {
-    return allCelebrationPlans.map((plan) => ({
-      id: `plan-${plan.id}`,
-      title: `🎉 ${plan.title}`,
-      start: new Date(plan.startTime).toISOString(),
-      end: new Date(plan.endTime).toISOString(),
-      extendedProps: {
-        description: plan.description,
-        budget: plan.budget,
-        venue: plan.venue,
-        food: plan.food,
-        decorator: plan.decorator,
-        entertainment: plan.entertainment,
-      },
-    }));
-  }, [allCelebrationPlans]);  
+    const uniqueCelebrationPlans = new Map<number, { 
+      id: number; 
+      title: string; 
+      startTime: string; 
+      endTime: string; 
+      users: number[]; 
+      description?: string;
+      budget?: number;
+      venue?: any;
+      food?: any;
+      decorator?: any;
+      entertainment?: any;
+    }>();
   
-
+    // Iterate over all users' celebration plans
+    Object.entries(celebrationPlansResults).forEach(([userId, plans]) => {
+      plans.forEach((plan: any) => {
+        if (!uniqueCelebrationPlans.has(plan.id)) {
+          uniqueCelebrationPlans.set(plan.id, { ...plan, users: [Number(userId)] });
+        } else {
+          uniqueCelebrationPlans.get(plan.id)!.users.push(Number(userId));
+        }
+      });
+    });
+  
+    return Array.from(uniqueCelebrationPlans.values()).map((plan) => {
+      const usersInPlan = plan.users || [];
+      const isSharedPlan = usersInPlan.length > 1;
+      const color = isSharedPlan ? "#FFD700" : memberColors[usersInPlan[0]] || "#000000";
+  
+      return {
+        id: `plan-${plan.id}`,
+        title: `🎉 ${usersInPlan.map((uid: number) => 
+          groupMembers?.find((m) => m.userId === uid)?.name || "Unknown"
+        ).join(", ")} - ${plan.title}`,
+        start: new Date(plan.startTime).toISOString(),
+        end: new Date(plan.endTime).toISOString(),
+        color,
+        extendedProps: {
+          description: plan.description,
+          budget: plan.budget,
+          venue: plan.venue,
+          food: plan.food,
+          decorator: plan.decorator,
+          entertainment: plan.entertainment,
+        },
+      };
+    });
+  }, [celebrationPlansResults, memberColors, groupMembers]);
+  
   const allEvents = [...allGroupEvents, ...formattedCelebrationPlans];
 
   const calendarClassNames = `w-[150vh] h-[60vh] ${

@@ -62,35 +62,47 @@ export const getMembersByCelebrationPlan = async (req: Request, res: Response): 
 
 // Add a member to a celebration plan
 export const addCelebrationPlanMember = async (req: Request, res: Response): Promise<void> => {
-    const { planId, email, role } = req.body;
+  const { planId, email, role } = req.body;
 
-    if (!planId || !email || !role) {
-        res.status(400).json({ message: "Celebration Plan ID, email, and role are required." });
-        return;
-    }
+  if (!planId || !email || !role) {
+      res.status(400).json({ message: "Celebration Plan ID, email, and role are required." });
+      return;
+  }
 
-    try {
-        const user = await prisma.user.findUnique({ where: { email } });
-        if (!user) {
-            res.status(404).json({ message: "User not found." });
-            return;
-        }
+  try {
+      const user = await prisma.user.findUnique({ where: { email } });
+      if (!user) {
+          res.status(404).json({ message: "User not found." });
+          return;
+      }
 
-        await prisma.celebrationPlanMember.create({
-            data: {
-                planId: Number(planId),
-                userId: user.id,
-                role,
-                status: "Accepted",
-            },
-        });
+      // Check if the user is already a member
+      const existingMember = await prisma.celebrationPlanMember.findUnique({
+          where: { planId_userId: { planId: Number(planId), userId: user.id } },
+      });
 
-        res.status(200).json({ message: "Member added successfully!" });
-    } catch (error: any) {
-        console.error("Error adding member:", error);
-        res.status(500).json({ message: `Error adding member: ${error.message}` });
-    }
+      if (existingMember) {
+          res.status(400).json({ message: "User is already a member of this plan." });
+          return;
+      }
+
+      // Add the user to the celebration plan
+      await prisma.celebrationPlanMember.create({
+          data: {
+              planId: Number(planId),
+              userId: user.id,
+              role,
+              status: "Accepted",
+          },
+      });
+
+      res.status(200).json({ message: "Member added successfully!" });
+  } catch (error: any) {
+      console.error("Error adding member:", error);
+      res.status(500).json({ message: `Error adding member: ${error.message}` });
+  }
 };
+
 
 // Update a celebration plan member's role or status
 export const updateCelebrationPlanMember = async (req: Request, res: Response): Promise<void> => {
