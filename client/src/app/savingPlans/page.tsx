@@ -1,4 +1,4 @@
-"use client"; // ✅ This tells Next.js that this is a client component
+"use client";
 
 import React, { useState, useMemo } from "react";
 import {
@@ -9,6 +9,7 @@ import {
   PointElement,
   Filler,
   Tooltip,
+  TimeScale,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 import {
@@ -20,7 +21,7 @@ import {
 import { useGetAuthUserQuery } from "@/state/api";
 
 // Register Chart.js components
-ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Filler, Tooltip);
+ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Filler, Tooltip, TimeScale);
 
 export default function SavingPlans() {
   const [amount, setAmount] = useState("");
@@ -68,21 +69,45 @@ export default function SavingPlans() {
   };
 
   // Prepare data for the chart
+  const sortedTransactions = useMemo(() => {
+    return [...transactions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [transactions]);
+
+  const groupedData = useMemo(() => {
+    if (transactions.length === 0) return [];
+  
+    let runningTotal = 0;
+    const cumulativeData: { date: string; total: number }[] = [];
+  
+    sortedTransactions.forEach((t) => {
+      runningTotal += t.type === "Deposit" ? t.amount : -t.amount;
+      cumulativeData.push({ date: new Date(t.date).toISOString().split("T")[0], total: runningTotal });
+    });
+  
+    return cumulativeData;
+  }, [sortedTransactions]);
+  
+  
+  
   const chartData = {
-    labels: transactions.map((t) => new Date(t.date).toLocaleDateString()),
+    labels: groupedData.map((entry) => entry.date),
     datasets: [
       {
         label: "Savings Progress",
-        data: transactions.reduce((acc: number[], t) => {
-          const newTotal = acc.length ? acc[acc.length - 1] + (t.type === "Deposit" ? t.amount : -t.amount) : t.amount;
-          return [...acc, newTotal];
-        }, []),
-        fill: true,
+        data: groupedData.map((entry) => entry.total),
+        fill: false,
         backgroundColor: "rgba(59, 130, 246, 0.2)",
         borderColor: "rgba(59, 130, 246, 1)",
+        tension: 0.1,
       },
     ],
   };
+
+  const recentTransactions = useMemo(() => {
+    return [...transactions]
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) // Sort in descending order (newest first)
+      .slice(0, 5); // Take the last 5
+  }, [transactions]);  
 
   return (
     <div className="p-6 bg-gray-100 dark:bg-black min-h-screen flex flex-col space-y-6">
@@ -94,12 +119,12 @@ export default function SavingPlans() {
       </div>
 
       {/* Savings Graph */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-md">
-        <h2 className="text-lg font-bold mb-4 text-gray-800 dark:text-white">Savings Progress</h2>
-        <div className="h-48 w-full">
-          <Line data={chartData} options={{ responsive: true, maintainAspectRatio: false }} />
-        </div>
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-md w-full">
+      <h2 className="text-lg font-bold mb-4 text-gray-800 dark:text-white">Savings Progress</h2>
+      <div className="h-64 w-full"> {/* Increased height for better visibility */}
+        <Line data={chartData} options={{ responsive: true, maintainAspectRatio: false }} />
       </div>
+    </div>
 
       {/* Add Savings */}
       <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-md">
@@ -132,24 +157,24 @@ export default function SavingPlans() {
         <details>
           <summary className="text-lg font-bold text-gray-800 dark:text-white">Recent Transactions</summary>
           <ul className="mt-4 space-y-2">
-            {transactions.slice(-5).reverse().map((transaction, index) => (
-              <li key={index} className="flex justify-between py-2 items-center">
-                <span
-                  className={`font-semibold ${
-                    transaction.type === "Deposit"
-                      ? "text-green-500 dark:text-green-400"
-                      : "text-red-500 dark:text-red-400"
-                  }`}
-                >
-                  {transaction.type}
-                </span>
-                <span className="text-gray-800 dark:text-white">${transaction.amount.toFixed(2)}</span>
-                <span className="text-gray-500 dark:text-gray-400">
-                  {new Date(transaction.date).toLocaleDateString()}
-                </span>
-              </li>
-            ))}
-          </ul>
+          {recentTransactions.map((transaction, index) => (
+            <li key={index} className="flex justify-between py-2 items-center">
+              <span
+                className={`font-semibold ${
+                  transaction.type === "Deposit"
+                    ? "text-green-500 dark:text-green-400"
+                    : "text-red-500 dark:text-red-400"
+                }`}
+              >
+                {transaction.type}
+              </span>
+              <span className="text-gray-800 dark:text-white">${transaction.amount.toFixed(2)}</span>
+              <span className="text-gray-500 dark:text-gray-400">
+                {new Date(transaction.date).toLocaleDateString()}
+              </span>
+            </li>
+          ))}
+        </ul>
         </details>
 
         {/* Clear All Transactions Button */}

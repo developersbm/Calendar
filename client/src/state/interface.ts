@@ -81,6 +81,7 @@ export interface Membership {
 
   export interface CelebrationPlan {
     title: string;
+    id: number;
     description: string;
     userId: number;
     startTime: string;

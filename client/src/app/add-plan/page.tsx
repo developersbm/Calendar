@@ -14,6 +14,7 @@ import {
 import { useGetAuthUserQuery, useCreateCelebrationPlanMutation, useGetUserQuery } from "@/state/api";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { useRouter } from "next/navigation";
 
 interface EventOption {
   name: string;
@@ -96,17 +97,16 @@ const AddPlan: React.FC = () => {
       price: number;
     };
   }
+
+  const router = useRouter();
   
   const handleSavePlan = async () => {
-    // Ensure only the event name and dates are required
     if (!templateTitle.trim() || !startDate || !endDate) {
       alert("Please enter the event name and select both start and end dates.");
       return;
     }
   
     let calculatedTotalPrice = 0;
-  
-    // Calculate total price only for included options
     Object.keys(detailsData).forEach((key) => {
       if (!disabledOptions[key] && detailsData[key]["Price"]) {
         calculatedTotalPrice += Number(detailsData[key]["Price"]) || 0;
@@ -115,16 +115,15 @@ const AddPlan: React.FC = () => {
   
     setTotalPrice(calculatedTotalPrice);
   
-    // Construct planData without including disabled options
     const planData: CelebrationPlan = {
       title: templateTitle.trim(),
-      userId,
+      description: "",
+      userId: userId ?? 0, // Ensure userId is a number
       startTime: startDate.toISOString(),
       endTime: endDate.toISOString(),
-      budget: calculatedTotalPrice || 0, // Set budget to 0 if no price is included
+      budget: calculatedTotalPrice || 0,
     };
   
-    // Only include optional fields if they are NOT disabled
     if (!disabledOptions["Venue"] && detailsData["Venue"]) {
       planData.venue = {
         name: String(detailsData["Venue"]["Venue Details"] || ""),
@@ -162,6 +161,7 @@ const AddPlan: React.FC = () => {
     try {
       await createCelebrationPlan(planData).unwrap();
       alert("Celebration plan saved successfully!");
+      router.push("/celebrationPlans"); // Redirect to /celebrationPlans
     } catch (error) {
       console.error("Error saving celebration plan:", error);
       alert("Failed to save the celebration plan.");

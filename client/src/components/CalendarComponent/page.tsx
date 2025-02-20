@@ -14,7 +14,8 @@ import {
   useGetUserQuery, 
   useGetEventCalendarQuery, 
   useDeleteEventMutation, 
-  useUpdateEventMutation 
+  useUpdateEventMutation,
+  useGetCelebrationPlansByUserQuery,
 } from "@/state/api";
 
 const CalendarComponent = () => {
@@ -182,9 +183,31 @@ const CalendarComponent = () => {
     }
   }, [deleteEvent]);
 
+  const { data: celebrationPlans } = useGetCelebrationPlansByUserQuery(user?.id ? String(user?.id) : "", { skip: !user?.id });
+
+  const formattedCelebrationPlans = celebrationPlans
+    ? celebrationPlans.map((plan) => ({
+        id: `plan-${plan.id}`,
+        title: `🎉 ${plan.title}`,
+        start: new Date(plan.startTime).toISOString(),
+        end: new Date(plan.endTime).toISOString(),
+        extendedProps: {
+          description: plan.description,
+          budget: plan.budget,
+          venue: plan.venue,
+          food: plan.food,
+          decorator: plan.decorator,
+          entertainment: plan.entertainment,
+        },
+      }))
+    : [];
+
+  const allEvents = [...formattedEvents, ...formattedCelebrationPlans];
+
   const calendarClassNames = `w-[150vh] h-[60vh] ${
-    isDarkMode ? "bg-black-300 text-white" : "bg-grey-300 text-black"
+    isDarkMode ? "bg-black-300 text-white dark-mode-calendar" : "bg-grey-300 text-black"
   }`;
+  
 
   return (
     <div className={calendarClassNames}>
@@ -201,12 +224,12 @@ const CalendarComponent = () => {
           right: "prev,next,today,dayGridMonth,timeGridWeek,timeGridDay",
         }}
         titleFormat={{ year: "numeric", month: "long" }}
-        events={formattedEvents}
+        events={allEvents}
         select={handleDateSelect}
         eventClick={handleEventDelete}
         eventDrop={handleEventDrop}
         eventResize={handleEventResize}
-        eventColor={isDarkMode ? "#4B5563" : "#2563EB"}
+        eventColor={isDarkMode ? "#374151" : "#2563EB"}
         themeSystem="bootstrap5"
         longPressDelay={150}
         eventLongPressDelay={200}

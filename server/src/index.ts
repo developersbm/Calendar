@@ -13,7 +13,7 @@ import groupRoutes from "./routes/groupRoutes"
 import transactionRoutes from "./routes/transactionRoutes"
 import userRoutes from "./routes/userRoutes"
 import creatingPlanRoutes from "./routes/creatingPlanRoutes"
-
+import celebrationPlanMemberRoutes from "./routes/celebrationPlanMemberRoutes"
 /* CONFIGURATIONS */
 dotenv.config();
 const app = express();
@@ -38,6 +38,7 @@ app.use("/group", groupRoutes);
 app.use("/celebrationPlan", creatingPlanRoutes)
 app.use("/transaction", transactionRoutes);
 app.use("/user", userRoutes);
+app.use("/celebrationPlanMember", celebrationPlanMemberRoutes);
 
 /* SERVER */
 const port = Number(process.env.PORT) || 3000;

@@ -8,7 +8,7 @@ import GroupModal from "@/components/GroupModal/page";
 
 const GroupsPage = () => {
   const { data: users } = useGetUsersQuery();
-  const { data: groupMembers } = useGetGroupMembersQuery();
+  const { data: groupMembers, refetch: refetchGroupMembers } = useGetGroupMembersQuery();
   const { data: groups, refetch: refetchSidebarGroups } = useGetGroupsQuery();
   
   const { data: authData } = useGetAuthUserQuery({});
@@ -67,11 +67,9 @@ const GroupsPage = () => {
   
     try {
       await createGroup({ title, description, userId: Number(userId) }).unwrap();
-      alert("Group created successfully!");
       setIsModalOpen(false);
       
-      // Refetch both the main groups list and the sidebar groups list
-      refetchSidebarGroups();
+      await Promise.all([refetchSidebarGroups(), refetchGroupMembers()]);
     } catch (error: any) {
       console.error("Error creating group:", error.data?.message);
       alert(`Failed to create group: ${error.data?.message || "Unknown error"}`);
@@ -84,9 +82,8 @@ const GroupsPage = () => {
   
     try {
       await deleteGroup(groupId).unwrap();
-      alert("Group deleted successfully!");
   
-      refetchSidebarGroups();
+      await Promise.all([refetchSidebarGroups(), refetchGroupMembers()]);
     } catch (error: any) {
       console.error("Error deleting group:", error.data?.message);
       alert(`Failed to delete group: ${error.data?.message || "Unknown error"}`);

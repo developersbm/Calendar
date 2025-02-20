@@ -1,11 +1,18 @@
 import { Router } from "express";
-import { getGroup, getGroups, postGroup, deleteGroup } from "../controllers/groupController";
+import {
+  getAllCelebrationPlanMembers,
+  getMembersByCelebrationPlan,
+  addCelebrationPlanMember,
+  updateCelebrationPlanMember,
+  removeCelebrationPlanMember
+} from "../controllers/celebrationPlanMemberController";
 
 const router = Router();
 
-router.get("/", getGroups);
-router.get("/", getGroup);
-router.post("/", postGroup);
-router.delete("/:groupId", deleteGroup);
+router.get("/", getAllCelebrationPlanMembers);
+router.get("/:planId/members", getMembersByCelebrationPlan);
+router.post("/add-member", addCelebrationPlanMember);
+router.put("/:planId/:userId", updateCelebrationPlanMember);
+router.delete("/:planId/:userId", removeCelebrationPlanMember);
 
 export default router;

@@ -5,14 +5,15 @@ import {
   ChevronDown,
   ChevronUp,
   Home,
-  Layers3,
+  PartyPopper,
   LucideIcon,
   X,
   Search,
   LogOut,
   CircleDollarSign,
   CalendarDays,
-  UsersRound
+  UsersRound,
+  
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -42,7 +43,6 @@ const Sidebar = () => {
 
   const { data: groups, refetch: refetchSidebarGroups } = useGetGroupsQuery();
   const { data: groupMembers } = useGetGroupMembersQuery();
-  const { data: celebrationPlans } = useGetCelebrationPlansByUserQuery(userId ?? "", { skip: !userId });
 
   const dispatch = useAppDispatch();
   const isSidebarCollapsed = useAppSelector(
@@ -58,8 +58,6 @@ const Sidebar = () => {
   const userGroups = groupMembers
     ?.filter((gm) => gm.userId === user?.id && gm.status === "Active")
     .map((gm) => groups?.find((g) => g.id === gm.groupId)) || [];
-
-  const userCelebrationPlans = celebrationPlans?.filter((cp) => cp.userId === user?.id) || [];
 
   const handleSignOut = async () => {
     try {
@@ -108,6 +106,7 @@ const Sidebar = () => {
           <SidebarLink icon={Home} label="Home" href="/" />
           <SidebarLink icon={CalendarDays} label="Calendar" href="/calendar" />
           <SidebarLink icon={CircleDollarSign} label="Savings" href="/savingPlans" />
+          <SidebarLink icon={PartyPopper} label="Celebration Plans" href="/celebrationPlans" />
         </nav>
         
         {/* GROUPS */}
@@ -120,12 +119,12 @@ const Sidebar = () => {
         </button>
         {showGroups && (
           <div>
-            {userGroups.map((group) => (
+            {userGroups.map((group, index) => (
               <SidebarLink
-                key={group?.id}
+                key={group?.id || `group-${index}`}
                 icon={UsersRound}
                 label={group?.title || "Unnamed Group"}
-                href={`/group-calendar/${group?.id}`}
+                href={`/group-calendar/${group?.id || `group-${index}`}`}
               />
             ))}
             <Link
@@ -134,35 +133,6 @@ const Sidebar = () => {
             >
               <Search className="h-6 w-6" />
               <span className="font-medium">View Groups</span>
-            </Link>
-          </div>
-        )}
-
-
-        {/* Celebration Plans */}
-        <button
-          onClick={() => setShowCelebrationPlans((prev) => !prev)}
-          className="flex w-full items-center justify-between px-8 py-3 text-gray-500"
-        >
-          <span>Celebration Plans</span>
-          {showCelebrationPlans ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-        </button>
-        {showCelebrationPlans && (
-          <div>
-            {userCelebrationPlans.map((plan) => (
-              <SidebarLink
-                key={plan.id}
-                icon={Layers3}
-                label={plan.title || "Unnamed Plan"}
-                href={`/celebrationPlan/${plan.id}`}
-              />
-            ))}
-            <Link
-              href="/celebrationPlans"
-              className="flex w-full items-center gap-3 px-8 py-3 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              <Search className="h-6 w-6" />
-              <span className="font-medium">View Plans</span>
             </Link>
           </div>
         )}

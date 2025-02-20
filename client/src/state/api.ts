@@ -191,10 +191,54 @@ export const api = createApi({
     
     // Celebration Plans (CRUD)
 
-    getCelebrationPlanMembers: build.query<CelebrationPlanMember[], void>({
+
+    // Get all celebration plan members
+    getAllCelebrationPlanMembers: build.query<CelebrationPlanMember[], void>({
       query: () => "celebrationPlanMember",
       providesTags: ["CelebrationPlanMembers"],
     }),
+
+    // Get members of a specific celebration plan
+    getMembersByCelebrationPlan: build.query<CelebrationPlanMember[], number>({
+      query: (planId) => `celebrationPlanMember/${planId}/members`,
+      providesTags: ["CelebrationPlanMembers"],
+    }),
+
+    // Add a member to a celebration plan
+    addCelebrationPlanMember: build.mutation<
+      void,
+      { planId: number; email: string; role: string }
+    >({
+      query: ({ planId, email, role }) => ({
+        url: "celebrationPlanMember/add-member",
+        method: "POST",
+        body: { planId, email, role },
+      }),
+      invalidatesTags: ["CelebrationPlanMembers"],
+    }),
+
+    // Update a celebration plan member's role or status
+    updateCelebrationPlanMember: build.mutation<
+      void,
+      { planId: number; userId: number; role?: string; status?: string }
+    >({
+      query: ({ planId, userId, role, status }) => ({
+        url: `celebrationPlanMember/${planId}/${userId}`,
+        method: "PUT",
+        body: { role, status },
+      }),
+      invalidatesTags: ["CelebrationPlanMembers"],
+    }),
+
+    // Remove a member from a celebration plan
+    removeCelebrationPlanMember: build.mutation<void, { planId: number; userId: number }>({
+      query: ({ planId, userId }) => ({
+        url: `celebrationPlanMember/${planId}/${userId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["CelebrationPlanMembers"],
+    }),
+
     getCelebrationPlansByUser: build.query<CelebrationPlan[], string>({
       query: (userId) => `celebrationPlan/user/${userId}`,
       providesTags: ["CelebrationPlans"],
@@ -281,6 +325,12 @@ export const {
   useCreateCelebrationPlanMutation,
   useUpdateCelebrationPlanMutation,
   useDeleteCelebrationPlanMutation,
+
+  useGetAllCelebrationPlanMembersQuery,
+  useGetMembersByCelebrationPlanQuery,
+  useAddCelebrationPlanMemberMutation,
+  useUpdateCelebrationPlanMemberMutation,
+  useRemoveCelebrationPlanMemberMutation,
 
   useGetTransactionsQuery,
   useAddTransactionMutation,

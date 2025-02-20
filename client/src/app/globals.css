@@ -43,3 +43,10 @@ body {
     font-size: 1rem !important;
   }
 }
+
+/* Apply grid line color change only in dark mode */
+.dark-mode-calendar .fc-theme-standard .fc-scrollgrid,
+.dark-mode-calendar .fc-theme-standard td,
+.dark-mode-calendar .fc-theme-standard th {
+  border-color: #566170 !important;
+}

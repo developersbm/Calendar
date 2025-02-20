@@ -5,6 +5,7 @@ import Image, { StaticImageData } from "next/image";
 
 // Dummy images (Replace with actual images if available)
 import profile from "../../../public/profile.png";
+import sbm from "../../../public/sbm.jpg";
 
 const AboutPage = () => {
   return (
@@ -23,7 +24,7 @@ const AboutPage = () => {
         <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {/* Developer */}
           <TeamMemberCard
-            image={profile}
+            image={sbm}
             name="Sebastian Bastida Marin"
             role="Developer"
             description="Sebastian is the sole developer behind Plan It, ensuring smooth performance and great features."

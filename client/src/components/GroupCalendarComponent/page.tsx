@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useState, useMemo } from "react";
+import { useCallback, useState, useMemo, useEffect } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -22,7 +22,7 @@ const GroupCalendarComponent = ({ groupId }: { groupId: number }) => {
   const [isModalOpen, setModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<EventClickArg | null>(null);
   const [selectedDate, setSelectedDate] = useState<DateSelectArg | undefined>(undefined);
-  
+
   const { data: groupMembers } = useGetMembersByGroupQuery(groupId, { skip: !groupId });
   
   const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
@@ -202,8 +202,82 @@ const GroupCalendarComponent = ({ groupId }: { groupId: number }) => {
     }
   }, [deleteEvent]);
 
+  const [celebrationPlansResults, setCelebrationPlansResults] = useState<Record<number, any[]>>({});
+
+  useEffect(() => {
+    const fetchCelebrationPlans = async () => {
+      if (!groupMembers || groupMembers.length === 0) {
+        console.warn("No group members available, skipping celebration plan fetch.");
+        return;
+      }
+  
+      console.log("Fetching celebration plans for group members:", groupMembers);
+  
+      try {
+        const plans = await Promise.all(
+          groupMembers.map(async (member) => {
+            if (!member.userId) {
+              console.warn(`Skipping member with missing userId:`, member);
+              return { userId: null, plans: [] };
+            }
+  
+            const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/celebrationPlans/${member.userId}`;
+            console.log(`Fetching celebration plans for user ${member.userId} from: ${apiUrl}`);
+  
+            const response = await fetch(apiUrl);
+            if (!response.ok) {
+              throw new Error(`Failed to fetch celebration plans for user ${member.userId}: ${response.statusText}`);
+            }
+  
+            const plansData = await response.json();
+            return { userId: member.userId, plans: plansData };
+          })
+        );
+  
+        // Ensure we only store valid data
+        const plansMap = plans.reduce((acc, result) => {
+          if (result.userId) acc[result.userId] = result.plans;
+          return acc;
+        }, {} as Record<number, any[]>);
+  
+        console.log("Fetched celebration plans:", plansMap);
+        setCelebrationPlansResults(plansMap);
+      } catch (error) {
+        console.error("Error fetching celebration plans:", error);
+      }
+    };
+  
+    fetchCelebrationPlans();
+  }, [groupMembers]);
+  
+  
+  const allCelebrationPlans = useMemo(() => {
+    return Object.values(celebrationPlansResults).flat();
+  }, [celebrationPlansResults]);  
+  
+  
+  const formattedCelebrationPlans = useMemo(() => {
+    return allCelebrationPlans.map((plan) => ({
+      id: `plan-${plan.id}`,
+      title: `🎉 ${plan.title}`,
+      start: new Date(plan.startTime).toISOString(),
+      end: new Date(plan.endTime).toISOString(),
+      extendedProps: {
+        description: plan.description,
+        budget: plan.budget,
+        venue: plan.venue,
+        food: plan.food,
+        decorator: plan.decorator,
+        entertainment: plan.entertainment,
+      },
+    }));
+  }, [allCelebrationPlans]);  
+  
+
+  const allEvents = [...allGroupEvents, ...formattedCelebrationPlans];
+
   const calendarClassNames = `w-[150vh] h-[60vh] ${
-    isDarkMode ? "bg-black-300 text-white" : "bg-grey-300 text-black"
+    isDarkMode ? "bg-black-300 text-white dark-mode-calendar" : "bg-grey-300 text-black"
   }`;
 
   return (
@@ -221,7 +295,7 @@ const GroupCalendarComponent = ({ groupId }: { groupId: number }) => {
           right: "prev,next,today,dayGridMonth,timeGridWeek,timeGridDay",
         }}
         titleFormat={{ year: "numeric", month: "long" }}
-        events={allGroupEvents}
+        events={allEvents}
         select={handleDateSelect}
         eventClick={handleEventDelete}
         eventDrop={handleEventDrop}

@@ -99,13 +99,13 @@ const SettingsPage = () => {
           <p>User information not available.</p>
         )}
 
-        {/* Delete Account Button */}
+        {/* Delete Account Button
         <button
           className="px-4 py-2 mt-4 rounded bg-red-600 text-white hover:bg-red-700 dark:bg-red-800 dark:hover:bg-red-900"
           onClick={handleDeleteUser}
         >
           Delete Account
-        </button>
+        </button> */}
       </div>
     </div>
   );
