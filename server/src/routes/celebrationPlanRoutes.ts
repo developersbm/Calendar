@@ -4,7 +4,7 @@ import {
     getCelebrationPlanById,
     createCelebrationPlan,
     deleteCelebrationPlan 
-} from '../controllers/creatingPlanController';
+} from '../controllers/celebrationPlanController';
 
 const router = express.Router();
 

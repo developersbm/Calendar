@@ -152,27 +152,31 @@ export const deleteCelebrationPlan = async (req: Request, res: Response): Promis
 
         // Delete related members (many-to-many)
         await prisma.celebrationPlanMember.deleteMany({
-            where: { planId: planId },
+            where: { planId },
         });
 
-        // Delete related entities if they exist
-        if (plan.venueId) {
-            await prisma.venue.delete({ where: { id: plan.venueId } });
-        }
-        if (plan.foodId) {
-            await prisma.food.delete({ where: { id: plan.foodId } });
-        }
-        if (plan.decoratorId) {
-            await prisma.decorator.delete({ where: { id: plan.decoratorId } });
-        }
-        if (plan.entertainmentId) {
-            await prisma.entertainment.delete({ where: { id: plan.entertainmentId } });
-        }
+        // Delete related entities only if they exist
+        const deleteIfExists = async (model: any, fieldId?: number | null) => {
+            if (typeof fieldId === "number") { // Ensure it's a number before deleting
+                try {
+                    await model.delete({ where: { id: fieldId } });
+                } catch (err) {
+                    console.warn(`Failed to delete ${model.name}, maybe it was already deleted.`);
+                }
+            }
+        };
 
-        // Delete the celebration plan itself
-        await prisma.celebrationPlan.delete({
-            where: { id: planId },
-        });
+        await deleteIfExists(prisma.venue, plan.venueId ?? undefined);
+        await deleteIfExists(prisma.food, plan.foodId ?? undefined);
+        await deleteIfExists(prisma.decorator, plan.decoratorId ?? undefined);
+        await deleteIfExists(prisma.entertainment, plan.entertainmentId ?? undefined);
+
+        // Finally, delete the celebration plan itself
+        try {
+            await prisma.celebrationPlan.delete({ where: { id: planId } });
+        } catch (err) {
+            console.warn(`Failed to delete celebration plan with id ${planId}. It may have been already removed.`);
+        }
 
         res.status(200).json({ message: "Celebration plan and all associated data deleted successfully" });
     } catch (error: any) {

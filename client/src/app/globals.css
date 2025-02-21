@@ -50,3 +50,17 @@ body {
 .dark-mode-calendar .fc-theme-standard th {
   border-color: #566170 !important;
 }
+
+/* Dark mode styles for FullCalendar */
+.dark-mode-calendar .fc-toolbar,
+.dark-mode-calendar .fc-col-header {
+  background-color: #1e1e1e !important; /* Dark background */
+  color: white !important; /* White text */
+  border-bottom: 1px solid #444 !important; /* Subtle border */
+}
+
+.dark-mode-calendar .fc-day-header {
+  background-color: #1e1e1e !important;
+  color: white !important;
+  border-bottom: 1px solid #444 !important;
+}

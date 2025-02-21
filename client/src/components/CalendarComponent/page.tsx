@@ -253,9 +253,8 @@ const CalendarComponent = () => {
         eventLongPressDelay={200}
         selectLongPressDelay={150}
 
-        height={isMobile ? "auto" : undefined}
-        contentHeight={isMobile ? "auto" : undefined}
-        aspectRatio={isMobile ? undefined : 1.5}
+        height={"auto"}
+        contentHeight={"auto"}
         dayMaxEventRows={true}
       />
       <Modal

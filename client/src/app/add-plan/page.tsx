@@ -160,7 +160,6 @@ const AddPlan: React.FC = () => {
   
     try {
       await createCelebrationPlan(planData).unwrap();
-      alert("Celebration plan saved successfully!");
       router.push("/celebrationPlans"); // Redirect to /celebrationPlans
     } catch (error) {
       console.error("Error saving celebration plan:", error);
