@@ -9,7 +9,7 @@ export default function Home() {
       {/* Hero Section */}
       <section className="text-center">
         <h1 className="text-4xl font-bold text-gray-800 dark:text-white">
-          Welcome to Plan It!
+          Welcome!
         </h1>
         <p className="mt-6 text-xl text-gray-600 dark:text-gray-300">
           Your one-stop solution for organizing plans, keeping track of events with a calendar, saving plans, and more.

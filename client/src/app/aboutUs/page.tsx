@@ -13,7 +13,7 @@ const AboutPage = () => {
       {/* Header Section */}
       <h1 className="text-5xl font-bold text-center mt-12">About Us</h1>
       <p className="mt-4 text-lg text-center max-w-3xl text-gray-600 dark:text-gray-300">
-        Plan It is your all-in-one platform for organizing events, managing savings, and collaborating efficiently.
+        This website is your all-in-one platform for organizing events, managing savings, and collaborating efficiently.
         Our mission is to simplify planning and coordination, making life easier for individuals, teams, and businesses.
       </p>
 
@@ -27,7 +27,7 @@ const AboutPage = () => {
             image={sbm}
             name="Sebastian Bastida Marin"
             role="Developer"
-            description="Sebastian is the sole developer behind Plan It, ensuring smooth performance and great features."
+            description="Sebastian is the sole developer behind this website, ensuring smooth performance and great features."
             linkedin="https://www.linkedin.com/in/sebastian-bastida/"
           />
 
