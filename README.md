@@ -49,3 +49,10 @@ kill -9 PID
 1. Remove gitignores
 2. rm -rf .git from client
 3. ```
+
+
+Copyright (c) 2025 Sebastian Bastida Marin
+
+All rights reserved.
+
+This code is proprietary and confidential. No permission is granted to use, copy, modify, or distribute this code, in whole or in part, for any purpose without explicit written permission from the author.
