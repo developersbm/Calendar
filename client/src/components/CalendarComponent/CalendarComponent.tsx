@@ -17,39 +17,102 @@ import {
   useUpdateEventMutation,
   useGetCelebrationPlansByUserQuery,
 } from "@/state/api";
-import ChatBot from "./ChatBot";
+import { testUser, testEvents, testCelebrationPlans } from "@/data/testData";
 
 const CalendarComponent = () => {
   const [isModalOpen, setModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<EventClickArg | null>(null);
   const [selectedDate, setSelectedDate] = useState<DateSelectArg | undefined>(undefined);
+  const [isServerOnline, setIsServerOnline] = useState<boolean>(true);
   
   const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
   
   const [deleteEvent] = useDeleteEventMutation();
   const [updateEvent] = useUpdateEventMutation();
 
-  const { data: authData } = useGetAuthUserQuery({});
+  const { data: authData, isError: isAuthError } = useGetAuthUserQuery({});
   const userId = authData?.user?.userId;
 
-  const { data: user, isError: isUserError } = useGetUserQuery(userId ?? "", { skip: !userId });
+  const { data: user, isError: isUserError } = useGetUserQuery(userId ?? "", { 
+    skip: !userId
+  });
 
-  const { data: events, refetch } = useGetEventCalendarQuery(user?.calendarId as number, { skip: !user?.calendarId });
+  const { data: events, refetch, isError: isEventsError } = useGetEventCalendarQuery(
+    user?.calendarId as number, 
+    { 
+      skip: !user?.calendarId
+    }
+  );
 
-  const formattedEvents = events
-  ? events.map((event) => ({
-      id: event.id.toString(),
-      title: event.title,
-      start: event.startTime ? new Date(event.startTime).toISOString() : new Date().toISOString(),
-      end: event.endTime ? new Date(event.endTime).toISOString() : new Date().toISOString(),
-      extendedProps: {
-        description: event.description,
-        recurrence: event.recurrence,
-        calendarId: event.calendarId,
-        participants: event.participants,
-      },
-    }))
-  : [];
+  const { data: celebrationPlans, isError: isCelebrationPlansError } = useGetCelebrationPlansByUserQuery(
+    user?.id ? String(user?.id) : "", 
+    { 
+      skip: !user?.id
+    }
+  );
+
+  useEffect(() => {
+    if (isAuthError || isUserError || isEventsError || isCelebrationPlansError) {
+      setIsServerOnline(false);
+    }
+  }, [isAuthError, isUserError, isEventsError, isCelebrationPlansError]);
+
+  const formattedEvents = isServerOnline && events
+    ? events.map((event) => ({
+        id: event.id.toString(),
+        title: event.title,
+        start: event.startTime ? new Date(event.startTime).toISOString() : new Date().toISOString(),
+        end: event.endTime ? new Date(event.endTime).toISOString() : new Date().toISOString(),
+        extendedProps: {
+          description: event.description,
+          recurrence: event.recurrence,
+          calendarId: event.calendarId,
+          participants: event.participants,
+        },
+      }))
+    : testEvents.map((event) => ({
+        id: event.id.toString(),
+        title: event.title,
+        start: event.startTime,
+        end: event.endTime,
+        extendedProps: {
+          description: event.description,
+          calendarId: event.calendarId,
+          participants: event.participants,
+        },
+      }));
+
+  const formattedCelebrationPlans = isServerOnline && celebrationPlans
+    ? celebrationPlans.map((plan) => ({
+        id: `plan-${plan.id}`,
+        title: `🎉 ${plan.title}`,
+        start: new Date(plan.startTime).toISOString(),
+        end: new Date(plan.endTime).toISOString(),
+        extendedProps: {
+          description: plan.description,
+          budget: plan.budget,
+          venue: plan.venue,
+          food: plan.food,
+          decorator: plan.decorator,
+          entertainment: plan.entertainment,
+        },
+      }))
+    : testCelebrationPlans.map((plan) => ({
+        id: `plan-${plan.id}`,
+        title: `🎉 ${plan.title}`,
+        start: plan.startTime,
+        end: plan.endTime,
+        extendedProps: {
+          description: plan.description,
+          budget: plan.budget,
+          venue: plan.venue,
+          food: plan.food,
+          decorator: plan.decorator,
+          entertainment: plan.entertainment,
+        },
+      }));
+
+  const allEvents = [...formattedEvents, ...formattedCelebrationPlans];
 
   const handleDateSelect = useCallback((selectInfo: DateSelectArg) => {
     console.log("Selected Date Info from FullCalendar:", selectInfo);
@@ -191,27 +254,6 @@ const CalendarComponent = () => {
     }
   }, [deleteEvent]);
 
-  const { data: celebrationPlans } = useGetCelebrationPlansByUserQuery(user?.id ? String(user?.id) : "", { skip: !user?.id });
-
-  const formattedCelebrationPlans = celebrationPlans
-    ? celebrationPlans.map((plan) => ({
-        id: `plan-${plan.id}`,
-        title: `🎉 ${plan.title}`,
-        start: new Date(plan.startTime).toISOString(),
-        end: new Date(plan.endTime).toISOString(),
-        extendedProps: {
-          description: plan.description,
-          budget: plan.budget,
-          venue: plan.venue,
-          food: plan.food,
-          decorator: plan.decorator,
-          entertainment: plan.entertainment,
-        },
-      }))
-    : [];
-
-  const allEvents = [...formattedEvents, ...formattedCelebrationPlans];
-
   const calendarClassNames = `w-[150vh] h-[80vh] ${
     isDarkMode ? "bg-black-300 text-white dark-mode-calendar" : "bg-grey-300 text-black"
   }`;
@@ -228,66 +270,43 @@ const CalendarComponent = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const handleChatBotEventCreate = async (event: any) => {
-    if (!user?.calendarId) {
-      alert("User does not have an associated calendar.");
-      return;
-    }
-
-    const eventData = {
-      title: event.title,
-      description: event.description || "",
-      startTime: new Date(event.startTime).toISOString(),
-      endTime: new Date(event.endTime).toISOString(),
-      calendarId: user.calendarId,
-    };
-
-    try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/event`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(eventData),
-      });
-      console.log("Event created successfully from chatbot.");
-      await refetch();
-    } catch (error) {
-      console.error("Error creating event from chatbot:", error);
-    }
-  };
-
   return (
-    <div className="relative">
-      <div className={calendarClassNames}>
-        {isUserError && <p className="text-red-500">Failed to fetch user information.</p>}
-        <FullCalendar
-          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-          initialView="dayGridMonth"
-          selectable={true}
-          editable={true}
-          locales={allLocales}
-          locale="en"
-          headerToolbar={{
-            left: "title",
-            right: "prev,next,today,dayGridMonth,timeGridWeek,timeGridDay",
-          }}
-          titleFormat={{ year: "numeric", month: "long" }}
-          events={allEvents}
-          select={handleDateSelect}
-          eventClick={handleEventDelete}
-          eventDrop={handleEventDrop}
-          eventResize={handleEventResize}
-          eventColor={isDarkMode ? "#374151" : "#2563EB"}
-          themeSystem="bootstrap5"
-          longPressDelay={150}
-          eventLongPressDelay={200}
-          selectLongPressDelay={150}
+    <div className={calendarClassNames}>
+      {!isServerOnline && (
+        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4" role="alert">
+          <p className="font-bold">Demo Mode</p>
+          <p>You are currently viewing demo data. To activate the live server with AWS EC2 and RDS, please let me know if you'd like to review the project!</p>
+          <p className="mt-2">AWS services are not free, so the project is currently running in demo mode to save costs.</p>
+          <p className="mt-2">For more information about the project, please check out the video at: <a href="https://github.com/developersbm/Calendar" className="text-blue-500 hover:underline" target="_blank" rel="noopener noreferrer">GitHub Repository</a></p>
+        </div>
+      )}
+      <FullCalendar
+        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+        initialView="dayGridMonth"
+        selectable={true}
+        editable={true}
+        locales={allLocales}
+        locale="en"
+        headerToolbar={{
+          left: "title",
+          right: "prev,next,today,dayGridMonth,timeGridWeek,timeGridDay",
+        }}
+        titleFormat={{ year: "numeric", month: "long" }}
+        events={allEvents}
+        select={handleDateSelect}
+        eventClick={handleEventDelete}
+        eventDrop={handleEventDrop}
+        eventResize={handleEventResize}
+        eventColor={isDarkMode ? "#374151" : "#2563EB"}
+        themeSystem="bootstrap5"
+        longPressDelay={150}
+        eventLongPressDelay={200}
+        selectLongPressDelay={150}
 
-          height={"auto"}
-          contentHeight={"auto"}
-          dayMaxEventRows={true}
-        />
-        <ChatBot onEventCreate={handleChatBotEventCreate} />
-      </div>
+        height={"auto"}
+        contentHeight={"auto"}
+        dayMaxEventRows={true}
+      />
       <Modal
         isOpen={isModalOpen}
         onClose={() => setModalOpen(false)}

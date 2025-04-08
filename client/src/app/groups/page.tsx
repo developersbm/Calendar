@@ -3,13 +3,36 @@
 import { useGetAuthUserQuery, useGetUserQuery, useGetUsersQuery, useGetGroupsQuery, useGetGroupMembersQuery, useAddMemberMutation, useCreateGroupMutation, useDeleteGroupMutation, useRemoveMemberMutation } from "@/state/api";
 import Image from "next/image";
 import { ChevronUp, ChevronDown, Trash2 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import GroupModal from "@/components/GroupModal/page";
+import { testGroups } from "@/data/testData";
+import { useAppSelector } from "@/app/redux";
+
+interface TestGroupMember {
+  id: number;
+  name: string;
+  email: string;
+  role: 'ADMIN' | 'MEMBER';
+}
+
+interface TestGroupEvent {
+  id: number;
+  title: string;
+  startTime: string;
+}
+
+interface TestGroup {
+  id: number;
+  name: string;
+  description: string;
+  members: TestGroupMember[];
+  events: TestGroupEvent[];
+}
 
 const GroupsPage = () => {
   const { data: users } = useGetUsersQuery();
   const { data: groupMembers, refetch: refetchGroupMembers } = useGetGroupMembersQuery();
-  const { data: groups, refetch: refetchSidebarGroups } = useGetGroupsQuery();
+  const { data: groups, isError: isGroupsError } = useGetGroupsQuery();
   
   const { data: authData } = useGetAuthUserQuery({});
   let userId = authData?.user.userId;
@@ -33,6 +56,17 @@ const GroupsPage = () => {
 
   const [deleteGroup] = useDeleteGroupMutation();
   const [removeMember] = useRemoveMemberMutation();
+
+  const [isServerOnline, setIsServerOnline] = useState<boolean>(true);
+  const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
+
+  useEffect(() => {
+    if (isGroupsError) {
+      setIsServerOnline(false);
+    }
+  }, [isGroupsError]);
+
+  const displayGroups = isServerOnline ? groups : testGroups;
 
   const toggleGroup = (groupId: number) => {
     setExpandedGroups((prev) => ({
@@ -69,7 +103,7 @@ const GroupsPage = () => {
       await createGroup({ title, description, userId: Number(userId) }).unwrap();
       setIsModalOpen(false);
       
-      await Promise.all([refetchSidebarGroups(), refetchGroupMembers()]);
+      await Promise.all([refetchGroupMembers()]);
     } catch (error: any) {
       console.error("Error creating group:", error.data?.message);
       alert(`Failed to create group: ${error.data?.message || "Unknown error"}`);
@@ -83,7 +117,7 @@ const GroupsPage = () => {
     try {
       await deleteGroup(groupId).unwrap();
   
-      await Promise.all([refetchSidebarGroups(), refetchGroupMembers()]);
+      await Promise.all([refetchGroupMembers()]);
     } catch (error: any) {
       console.error("Error deleting group:", error.data?.message);
       alert(`Failed to delete group: ${error.data?.message || "Unknown error"}`);
@@ -100,7 +134,7 @@ const GroupsPage = () => {
     try {
       await removeMember({ groupId, memberId }).unwrap();
       alert("Member removed successfully!");
-      refetchSidebarGroups();
+      refetchGroupMembers();
     } catch (error) {
       console.error("Error removing member:", error);
       alert("Failed to remove member.");
@@ -109,115 +143,55 @@ const GroupsPage = () => {
 
 
   return (
-    <div className="container mx-auto p-6 dark:bg-black dark:text-white">
-      {/* Title & Button aligned horizontally */}
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Your Groups</h1>
-
-        {/* Create Group Button (aligned right) */}
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="bg-blue-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-600 transition"
-        >
-          + Create Group
-        </button>
-      </div>
-
-      {/* Group List */}
-      {userGroups.length === 0 ? (
-        <p className="text-gray-500 dark:text-gray-400">You are not part of any groups.</p>
-      ) : (
-        userGroups.map((group) => {
-          if (!group) return null;
-
-          return (
-            <div key={group.id} className="border rounded-lg p-4 mb-4 shadow-md bg-white dark:bg-gray-800 dark:border-gray-700">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-xl font-semibold">{group.title}</h2>
-                <div className="flex flex-col items-center gap-2">
-                  <button onClick={() => group?.id && handleDeleteGroup(group.id)} className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md">
-                    <Trash2 className="h-5 w-5 text-red-700" />
-                  </button>
-                  <button
-                    onClick={() => toggleGroup(group.id)}
-                    className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
-                    aria-label={`Toggle members for ${group.title}`}
-                  >
-                    {expandedGroups[group.id] ? (
-                      <ChevronUp className="h-5 w-5 text-gray-800 dark:text-gray-100" />
-                    ) : (
-                      <ChevronDown className="h-5 w-5 text-gray-800 dark:text-gray-100" />
-                    )}
-                  </button>
-                </div>
-              </div>
-              <p className="text-gray-600 dark:text-gray-300 mb-4">{group.description}</p>
-
-              {expandedGroups[group.id] && (
-                <div>
-                  <h3 className="text-lg font-medium mb-2">Members:</h3>
-                  <ul className="list-disc ml-6">
-                    {groupMembers
-                      ?.filter((gm) => gm.groupId === group.id)
-                      .map((gm) => {
-                        const member = users?.find((user) => user.id === gm.userId);
-                        return (
-                          <li
-                            key={member?.id}
-                            className="flex items-center gap-2 mb-2 text-gray-800 dark:text-gray-100"
-                          >
-                            <Image
-                              src={"/profile.png"}
-                              alt={""}
-                              width={32}
-                              height={32}
-                              className="rounded-full"
-                            />
-                            <span>
-                              {member?.name} {member?.id === user?.id ? "(You)" : ""}
-                            </span>
-                            <button onClick={() => group?.id && member?.id && handleRemoveMember(group.id, member.id)}>
-                              <Trash2 className="text-red-500" />
-                            </button>
-                          </li>
-                        );
-                      })}
-                  </ul>
-
-                  {/* Show "Add Member" button only when group is expanded */}
-                  <button
-                    onClick={() => toggleAddMember(group.id)}
-                    className={`mt-4 px-4 py-2 rounded-md transition ${
-                      addMemberGroup === group.id ? "bg-red-500 hover:bg-red-600" : "bg-green-500 hover:bg-green-600"
-                    } text-white`}
-                  >
-                    {addMemberGroup === group.id ? "Cancel" : "+ Add Member"}
-                  </button>
-
-                  {/* Show input only when Add Member is clicked */}
-                  {addMemberGroup === group.id && (
-                    <div className="mt-2">
-                      <input
-                        type="email"
-                        placeholder="Enter user email"
-                        className="border p-2 rounded dark:bg-gray-700 dark:text-white w-full"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                      />
-                      <button
-                        onClick={() => handleAddMember(group.id)}
-                        className="mt-2 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition w-full"
-                      >
-                        Add Member
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })
+    <div className={`p-4 ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}>
+      {!isServerOnline && (
+        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4" role="alert">
+          <p className="font-bold">Demo Mode</p>
+          <p>You are currently viewing demo data. To activate the live server with AWS EC2 and RDS, please let me know if you'd like to review the project!</p>
+          <p className="mt-2">AWS services are not free, so the project is currently running in demo mode to save costs.</p>
+          <p className="mt-2">For more information about the project, please check out the video at: <a href="https://github.com/developersbm/Calendar" className="text-blue-500 hover:underline" target="_blank" rel="noopener noreferrer">GitHub Repository</a></p>
+        </div>
       )}
+      
+      <h1 className="text-2xl font-bold mb-4">Groups</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {(displayGroups as TestGroup[])?.map((group) => (
+          <div 
+            key={group.id} 
+            className={`p-4 rounded-lg shadow ${
+              isDarkMode ? "bg-gray-800" : "bg-white"
+            }`}
+          >
+            <h2 className="text-xl font-semibold mb-2">{group.name}</h2>
+            <p className="text-gray-600 mb-4">{group.description}</p>
+            <h3 className="font-medium mb-2">Members:</h3>
+            <ul className="space-y-2">
+              {group.members.map((member) => (
+                <li key={member.id} className="flex items-center">
+                  <span className="mr-2">{member.role === 'ADMIN' ? '👑' : '👤'}</span>
+                  <span>{member.name}</span>
+                  <span className="text-gray-500 text-sm ml-2">({member.email})</span>
+                </li>
+              ))}
+            </ul>
+            {group.events.length > 0 && (
+              <div className="mt-4">
+                <h3 className="font-medium mb-2">Upcoming Events:</h3>
+                <ul className="space-y-2">
+                  {group.events.map((event) => (
+                    <li key={event.id} className="text-sm">
+                      <span className="font-medium">{event.title}</span>
+                      <span className="text-gray-500 ml-2">
+                        {new Date(event.startTime).toLocaleDateString()}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
 
       <GroupModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={handleCreateGroup} />
     </div>

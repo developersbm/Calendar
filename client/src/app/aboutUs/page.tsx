@@ -3,7 +3,7 @@
 import React from "react";
 import Image, { StaticImageData } from "next/image";
 import { Linkedin } from "lucide-react";
-// Dummy images (Replace with actual images if available)
+
 import profile from "../../../public/profile.png";
 import sbm from "../../../public/sbm.jpg";
 
@@ -29,22 +29,6 @@ const AboutPage = () => {
             role="Developer"
             description="Sebastian is the sole developer behind this website, ensuring smooth performance and great features."
             linkedin="https://www.linkedin.com/in/sebastian-bastida/"
-          />
-
-          {/* Marketing Team Member 1 */}
-          <TeamMemberCard
-            image={profile}
-            name="..."
-            role="Marketing"
-            description="..."
-          />
-
-          {/* Marketing Team Member 2 */}
-          <TeamMemberCard
-            image={profile}
-            name="..."
-            role="Marketing"
-            description="..."
           />
         </div>
       </section>
