@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import {
   Calendar,
@@ -8,13 +8,12 @@ import {
   Utensils,
   Paintbrush,
   Music,
-  Edit2,
-  CirclePlus,
+  DollarSign,
+  X
 } from "lucide-react";
-import { useGetAuthUserQuery, useCreateCelebrationPlanMutation, useGetUserQuery } from "@/state/api";
+import { useCreateCelebrationPlanMutation } from "@/state/api";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { useRouter } from "next/navigation";
 
 interface EventOption {
   name: string;
@@ -28,8 +27,34 @@ interface DetailsData {
   };
 }
 
-const AddPlan: React.FC = () => {
-  const [templateTitle, setTemplateTitle] = useState<string>("Click to edit plan name");
+interface CelebrationPlanPayload {
+    title: string;
+    description: string;
+    userId: number;
+    startTime: string;
+    endTime: string;
+    budget: number;
+    venue?: { name: string; location: string; price: number };
+    food?: { type: string; items: string; price: number };
+    decorator?: { name: string; theme: string; price: number };
+    entertainment?: { name: string; style: string; price: number };
+}
+
+interface OptionalSection {
+  name: string;
+  icon: JSX.Element;
+  fields: string[];
+}
+
+interface CelebrationPlanModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  userId: number | undefined;
+  onPlanCreated: () => void;
+}
+
+const CelebrationPlanModal: React.FC<CelebrationPlanModalProps> = ({ isOpen, onClose, userId, onPlanCreated }) => {
+  const [planName, setPlanName] = useState<string>("");
   const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
@@ -41,342 +66,262 @@ const AddPlan: React.FC = () => {
     fields: ["Event Date Start", "Event Date End"],
   });
   const [detailsData, setDetailsData] = useState<DetailsData>({});
-
-  const { data: authData } = useGetAuthUserQuery({});
-  const cognitoId = authData?.user?.userId;
-
-  const { data: user } = useGetUserQuery(cognitoId ?? "", {
-    skip: !cognitoId,
+  const [disabledOptions, setDisabledOptions] = useState<{ [key: string]: boolean }>({
+    Venue: true,
+    Food: true,
+    Decorator: true,
+    "Host/DJ": true,
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const userId = user?.id;
-  
-  const [createCelebrationPlan] = useCreateCelebrationPlanMutation();
-  const [disabledOptions, setDisabledOptions] = useState<{ [key: string]: boolean }>({});
+  useEffect(() => {
+    if (!isOpen) {
+        setPlanName("");
+        setStartDate(null);
+        setEndDate(null);
+        setTotalPrice(0);
+        setDetailsData({});
+        setDisabledOptions({ Venue: true, Food: true, Decorator: true, "Host/DJ": true });
+        setIsSubmitting(false);
+    }
+  }, [isOpen]);
 
-  const handleTitleClick = () => {
-    if (templateTitle === "Click to edit plan name") {
-      setTemplateTitle("");
-    }
-    setIsEditingTitle(true);
-  };
-  
-
-  const handleTitleBlur = () => {
-    if (!templateTitle.trim()) {
-      setTemplateTitle("Click to edit plan name");
-    }
-    setIsEditingTitle(false);
-  };
-
-  interface CelebrationPlan {
-    title: string;
-    description: string;
-    userId: number;
-    startTime: string;
-    endTime: string;
-    budget: number;
-    venue?: {
-      name: string;
-      location: string;
-      price: number;
-    };
-    food?: {
-      type: string;
-      items: string;
-      price: number;
-    };
-    decorator?: {
-      name: string;
-      theme: string;
-      price: number;
-    };
-    entertainment?: {
-      name: string;
-      style: string;
-      price: number;
-    };
-  }
-
-  const router = useRouter();
-  
-  const handleSavePlan = async () => {
-    if (!templateTitle.trim() || !startDate || !endDate) {
-      alert("Please enter the event name and select both start and end dates.");
-      return;
-    }
-  
-    let calculatedTotalPrice = 0;
-    Object.keys(detailsData).forEach((key) => {
-      if (!disabledOptions[key] && detailsData[key]["Price"]) {
-        calculatedTotalPrice += Number(detailsData[key]["Price"]) || 0;
-      }
-    });
-  
-    setTotalPrice(calculatedTotalPrice);
-  
-    const planData: CelebrationPlan = {
-      title: templateTitle.trim(),
-      description: "",
-      userId: userId ?? 0, // Ensure userId is a number
-      startTime: startDate.toISOString(),
-      endTime: endDate.toISOString(),
-      budget: calculatedTotalPrice || 0,
-    };
-  
-    if (!disabledOptions["Venue"] && detailsData["Venue"]) {
-      planData.venue = {
-        name: String(detailsData["Venue"]["Venue Details"] || ""),
-        location: String(detailsData["Venue"]["Location"] || ""),
-        price: Number(detailsData["Venue"]["Price"] || 0),
-      };
-    }
-  
-    if (!disabledOptions["Food"] && detailsData["Food"]) {
-      planData.food = {
-        type: String(detailsData["Food"]["Food Details"] || ""),
-        items: String(detailsData["Food"]["Items"] || ""),
-        price: Number(detailsData["Food"]["Price"] || 0),
-      };
-    }
-  
-    if (!disabledOptions["Decorator"] && detailsData["Decorator"]) {
-      planData.decorator = {
-        name: String(detailsData["Decorator"]["Decorator Details"] || ""),
-        theme: String(detailsData["Decorator"]["Theme"] || ""),
-        price: Number(detailsData["Decorator"]["Price"] || 0),
-      };
-    }
-  
-    if (!disabledOptions["Host/DJ"] && detailsData["Host/DJ"]) {
-      planData.entertainment = {
-        name: String(detailsData["Host/DJ"]["Host/DJ Details"] || ""),
-        style: String(detailsData["Host/DJ"]["Style"] || ""),
-        price: Number(detailsData["Host/DJ"]["Price"] || 0),
-      };
-    }
-  
-    console.log("Submitting Plan Data:", planData);
-  
-    try {
-      await createCelebrationPlan(planData).unwrap();
-      router.push("/celebrationPlans"); // Redirect to /celebrationPlans
-    } catch (error) {
-      console.error("Error saving celebration plan:", error);
-      alert("Failed to save the celebration plan.");
-    }
-  };  
-  
-
-  const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
+  const [createCelebrationPlan, { isLoading: isMutationLoading }] = useCreateCelebrationPlanMutation();
 
   const eventOptions: EventOption[] = [
-    { name: "Date", icon: <Calendar size={32} />, fields: ["Event Date Start", "Event Date End"] },
     { name: "Venue", icon: <MapPin size={32} />, fields: ["Venue Details", "Location", "Price"] },
     { name: "Food", icon: <Utensils size={32} />, fields: ["Food Details", "Items", "Price"] },
     { name: "Decorator", icon: <Paintbrush size={32} />, fields: ["Decorator Details", "Theme", "Price"] },
     { name: "Host/DJ", icon: <Music size={32} />, fields: ["Host/DJ Details", "Style", "Price"] },
   ];
 
-  const handleOptionClick = (option: EventOption) => setSelectedOption(option);
-
-  const handleFieldChange = (fieldName: string, value: string) => {
-    setDetailsData((prev) => {
-      const newData = {
-        ...prev,
-        [selectedOption!.name]: {
-          ...prev[selectedOption!.name],
-          [fieldName]: value.toString(),
-        },
-      };
-  
-      // Dynamically update total price when a "Price" field is updated
-      let newTotalPrice = 0;
-      Object.keys(newData).forEach((category) => {
-        if (!disabledOptions[category] && newData[category]["Price"]) {
-          newTotalPrice += Number(newData[category]["Price"]) || 0;
-        }
-      });
-  
-      setTotalPrice(newTotalPrice);
-      return newData;
-    });
+  const handleFieldChange = (category: string, fieldName: string, value: string) => {
+    setDetailsData((prev) => ({
+      ...prev,
+      [category]: {
+        ...prev[category],
+        [fieldName]: value,
+      },
+    }));
   };
-   
+
   const handleCheckboxChange = (optionName: string) => {
+    const isCurrentlyDisabled = disabledOptions[optionName];
     setDisabledOptions((prev) => ({
       ...prev,
-      [optionName]: !prev[optionName],
+      [optionName]: !isCurrentlyDisabled,
     }));
-  
-    setDetailsData((prev) => {
-      const newData = { ...prev };
-  
-      if (!disabledOptions[optionName]) {
-        // Remove the option if disabled
-        delete newData[optionName];
-  
-        // Update total price by removing the disabled option
-        const priceToSubtract = Number(prev[optionName]?.["Price"]) || 0;
-        setTotalPrice((prevTotal) => prevTotal - priceToSubtract);
-      }
-  
-      return newData;
-    });
+    if (isCurrentlyDisabled) {
+       setDetailsData(prev => ({ ...prev, [optionName]: {} }));
+    } 
   };
-  
+
+  useEffect(() => {
+    let newTotalPrice = 0;
+    Object.keys(detailsData).forEach((category) => {
+      if (!disabledOptions[category] && detailsData[category]["Price"]) {
+        newTotalPrice += Number(detailsData[category]["Price"]) || 0;
+      }
+    });
+    setTotalPrice(newTotalPrice);
+  }, [detailsData, disabledOptions]);
+
+  const handleSavePlan = async () => {
+    if (!userId) {
+      alert("User information not available. Cannot save plan.");
+      return;
+    }
+    if (!planName.trim() || !startDate || !endDate) {
+      alert("Please enter the Plan Name and select both Start and End Dates.");
+      return;
+    }
+    if (startDate > endDate) {
+       alert("End Date must be after Start Date.");
+       return;
+    }
+
+    setIsSubmitting(true);
+
+    const planData: CelebrationPlanPayload = {
+      title: planName.trim(),
+      description: "User-created celebration plan",
+      userId: userId,
+      startTime: startDate.toISOString(),
+      endTime: endDate.toISOString(),
+      budget: totalPrice,
+    };
+
+    eventOptions.forEach(option => {
+      const sectionName = option.name;
+      if (!disabledOptions[sectionName] && detailsData[sectionName]) {
+          const details = detailsData[sectionName];
+          const price = Number(details["Price"] || 0);
+          switch (sectionName) {
+              case "Venue":
+                  planData.venue = { name: String(details["Venue Details"] || ""), location: String(details["Location"] || ""), price };
+                  break;
+              case "Food":
+                  planData.food = { type: String(details["Food Details"] || ""), items: String(details["Items"] || ""), price };
+                  break;
+              case "Decorator":
+                  planData.decorator = { name: String(details["Decorator Details"] || ""), theme: String(details["Theme"] || ""), price };
+                  break;
+              case "Host/DJ":
+                  planData.entertainment = { name: String(details["Host/DJ Details"] || ""), style: String(details["Style"] || ""), price };
+                  break;
+          }
+      }
+    });
+
+    console.log("Submitting Plan Data (Modal):", planData);
+    try {
+      await createCelebrationPlan(planData).unwrap();
+      onPlanCreated();
+      onClose();
+    } catch (error) {
+      console.error("Error saving celebration plan:", error);
+      alert("Failed to save the celebration plan.");
+    } finally {
+        setIsSubmitting(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
   return (
-    <div className="flex h-screen bg-gray-100 dark:bg-black">
-      {/* Sidebar */}
-      <div
-        className={`fixed top-0 left-0 h-full w-64 bg-blue-500 z-20 transition-transform duration-300 ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-64"
-        }`}
-      >
-        <button
-          className="p-4 text-white font-bold"
-          onClick={toggleSidebar}
-        >
-          {isSidebarOpen ? "Close Sidebar" : "Open Sidebar"}
-        </button>
-        <div className="p-4 text-white">Sidebar Content</div>
-      </div>
-
-      {/* Main Content */}
-      <div
-        className={`flex-grow transition-all duration-300 overflow-hidden ${
-          isSidebarOpen ? "ml-64" : "ml-0"
-        }`}
-      >
-        <div className="max-h-[calc(100vh-5rem)] overflow-y-auto px-4 pb-8">
-          {/* Editable Event Name */}
-          <div className="flex justify-center items-center mt-8">
-            {isEditingTitle ? (
-              <input
-                type="text"
-                value={templateTitle}
-                onChange={(e) => setTemplateTitle(e.target.value)}
-                onBlur={handleTitleBlur}
-                className="text-center text-2xl font-bold bg-transparent border-b-2 border-blue-500 focus:outline-none dark:text-white"
-                autoFocus
-              />
-            ) : (
-              <div className="flex items-center space-x-2">
-                <h1
-                  onClick={handleTitleClick}
-                  className="text-2xl font-bold cursor-pointer text-gray-800 dark:text-white"
-                >
-                  {templateTitle}
-                </h1>
-                <Edit2
-                  size={20}
-                  onClick={handleTitleClick}
-                  className="cursor-pointer text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Event Buttons */}
-          <div className="flex justify-center space-x-4 mt-6">
-            {eventOptions.map((option) => (
-              <button
-                key={option.name}
-                onClick={() => handleOptionClick(option)}
-                className={`flex flex-col items-center justify-center w-24 h-24 rounded-lg font-bold text-white ${
-                  selectedOption?.name === option.name ? "bg-blue-600" : "bg-blue-500"
-                } hover:bg-blue-600 focus:outline-none dark:bg-blue-700 dark:hover:bg-blue-800`}
-              >
-                {option.icon}
-                <span className="text-sm">{option.name}</span>
-              </button>
-            ))}
-          </div>
-
-          {/* Selected Option Details */}{/* Selected Option Details */}
-{selectedOption && (
-  <div className="w-full max-w-md mt-6 mx-auto p-4 border rounded bg-white dark:bg-gray-800 dark:text-white">
-    {selectedOption.name === "Date" ? (
-      <>
-        {/* Start Date */}
-        <div className="mb-4">
-          <label className="block mb-2 text-sm font-medium">Event Date Start</label>
-          <DatePicker
-            selected={startDate}
-            onChange={(date: Date | null) => setStartDate(date)}
-            dateFormat="yyyy-MM-dd"
-            className="block w-full p-2 border rounded dark:bg-gray-700 dark:text-white"
-            placeholderText="Select start date"
-          />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 p-4 backdrop-blur-sm">
+      <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+        <div className="flex justify-between items-center p-4 border-b dark:border-gray-700">
+            <h1 className="text-xl font-bold text-gray-800 dark:text-white">Create New Celebration Plan</h1>
+            <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                aria-label="Close modal"
+            >
+                <X size={24} />
+            </button>
         </div>
 
-        {/* End Date */}
-        <div className="mb-4">
-          <label className="block mb-2 text-sm font-medium">Event Date End</label>
-          <DatePicker
-            selected={endDate}
-            onChange={(date: Date | null) => setEndDate(date)}
-            dateFormat="yyyy-MM-dd"
-            className="block w-full p-2 border rounded dark:bg-gray-700 dark:text-white"
-            placeholderText="Select end date"
-          />
+        <div className="flex-grow overflow-y-auto p-6 md:p-8">
+            <p className="text-sm text-center text-gray-600 dark:text-gray-400 mb-6">
+                Fill in the details below to organize your event.
+            </p>
+
+            <section className="mb-6 border-b dark:border-gray-700 pb-6">
+                <h2 className="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-200">Core Details</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label htmlFor="modal-planName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Plan Name *</label>
+                        <input
+                            type="text"
+                            id="modal-planName"
+                            value={planName}
+                            onChange={(e) => setPlanName(e.target.value)}
+                            placeholder="E.g., John's 30th Birthday Bash"
+                            className="w-full p-2 border border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-blue-500 focus:border-blue-500"
+                            required
+                        />
+                    </div>
+                    <div></div>
+                    <div>
+                        <label htmlFor="modal-startDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Start Date & Time *</label>
+                        <DatePicker
+                            selected={startDate}
+                            onChange={(date) => setStartDate(date)}
+                            selectsStart
+                            startDate={startDate}
+                            endDate={endDate}
+                            showTimeSelect
+                            dateFormat="Pp"
+                            placeholderText="Select start date & time"
+                            className="w-full p-2 border border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="modal-endDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">End Date & Time *</label>
+                        <DatePicker
+                            selected={endDate}
+                            onChange={(date) => setEndDate(date)}
+                            selectsEnd
+                            startDate={startDate}
+                            endDate={endDate}
+                            minDate={startDate || undefined}
+                            showTimeSelect
+                            dateFormat="Pp"
+                            placeholderText="Select end date & time"
+                            className="w-full p-2 border border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            required
+                        />
+                    </div>
+                </div>
+            </section>
+
+            <section className="mb-6">
+                <h2 className="text-lg font-semibold mb-3 text-gray-700 dark:text-gray-200">Optional Details</h2>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Select components to include. Prices entered contribute to the budget.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {eventOptions.map((option) => (
+                    <div key={option.name} className="p-3 border dark:border-gray-700 rounded-lg ">
+                        <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                                <span className="text-blue-500 dark:text-blue-400">{option.icon}</span>
+                                <h3 className="text-md font-medium text-gray-800 dark:text-gray-100">{option.name}</h3>
+                            </div>
+                            <input
+                                type="checkbox"
+                                checked={!disabledOptions[option.name]}
+                                onChange={() => handleCheckboxChange(option.name)}
+                                className="form-checkbox h-5 w-5 text-blue-600 rounded focus:ring-blue-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:checked:bg-blue-500 cursor-pointer"
+                            />
+                        </div>
+                        {!disabledOptions[option.name] && (
+                        <div className="space-y-3 pt-3 border-t dark:border-gray-600">
+                            {option.fields.map((field) => (
+                            <div key={field}>
+                                <label htmlFor={`modal-${option.name}-${field}`} className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
+                                {field}{field.toLowerCase().includes('price') ? ' ($':''}{field.toLowerCase().includes('price') ? ')':''}
+                                </label>
+                                <input
+                                    type={field.toLowerCase().includes('price') ? 'number' : 'text'}
+                                    id={`modal-${option.name}-${field}`}
+                                    value={detailsData[option.name]?.[field] || ""}
+                                    onChange={(e) => handleFieldChange(option.name, field, e.target.value)}
+                                    min={field.toLowerCase().includes('price') ? "0" : undefined}
+                                    step={field.toLowerCase().includes('price') ? "0.01" : undefined}
+                                    placeholder={`Enter ${field}`}
+                                    className="w-full p-2 text-sm border border-gray-300 rounded-md shadow-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white focus:ring-blue-500 focus:border-blue-500"
+                                />
+                            </div>
+                            ))}
+                        </div>
+                        )}
+                    </div>
+                    ))}
+                </div>
+            </section>
         </div>
-      </>
-    ) : (
-      <>
-        {/* Inputs for Other Options */}
-        {selectedOption.fields.map((field, index) => (
-          <div key={index} className="mb-4">
-            <label className="block mb-2 text-sm font-medium">{field}</label>
-            <input
-              type={field === "Price" ? "number" : "text"}
-              value={detailsData[selectedOption.name]?.[field] || ""}
-              onChange={(e) => handleFieldChange(field, e.target.value)}
-              className="block w-full p-2 border rounded dark:bg-gray-700 dark:text-white"
-              placeholder={`Enter ${field.toLowerCase()}`}
-              disabled={disabledOptions[selectedOption.name]}
-            />
-          </div>
-        ))}
 
-        {/* Show "Do not include this" checkbox only for non-Date options */}
-        {selectedOption.name !== "Date" && (
-          <div className="mb-4 flex items-center space-x-2">
-            <input
-              className="w-5 h-5 cursor-pointer"
-              type="checkbox"
-              checked={!!disabledOptions[selectedOption.name]}
-              onChange={() => handleCheckboxChange(selectedOption.name)}
-            />
-            <label className="text-sm font-medium">Do not include this</label>
-          </div>
-        )}
-      </>
-    )}
-  </div>
-)}
-
-          {/* Bottom Menu */}
-          <div
-            className={`fixed bottom-0 h-16 bg-gray-200 dark:bg-gray-900 w-full flex justify-around items-center z-10 transition-all duration-300 ${
-              isSidebarOpen ? "pl-64" : ""
-            }`}
-          >
-            <div className="text-center">
-              <p className="font-bold text-gray-800 dark:text-white">Total Money</p>
-              <p className="text-green-500 dark:text-green-400">${totalPrice.toFixed(2)}</p>
+        <div className="p-4 border-t dark:border-gray-700 flex flex-col md:flex-row justify-between items-center gap-4 bg-gray-50 dark:bg-gray-800 rounded-b-lg">
+            <div className="text-md font-semibold text-gray-800 dark:text-white flex items-center gap-2">
+                <DollarSign size={18} />
+                Estimated Budget: ${totalPrice.toFixed(2)}
             </div>
             <button
-              onClick={handleSavePlan}
-              className="flex items-center justify-center w-14 h-14 bg-green-500 rounded-full hover:bg-green-600 focus:outline-none"
+                onClick={handleSavePlan}
+                disabled={isSubmitting || isMutationLoading}
+                className={`px-6 py-2 font-semibold rounded-lg shadow-md text-white transition duration-150 ease-in-out ${
+                    (isSubmitting || isMutationLoading)
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800'
+                }`}
             >
-              <CirclePlus size={50} className="text-white" />
+                {isSubmitting || isMutationLoading ? 'Saving...' : 'Save Celebration Plan'}
             </button>
-          </div>
         </div>
       </div>
     </div>
   );
 };
 
-export default AddPlan;
+export default CelebrationPlanModal;

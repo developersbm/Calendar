@@ -77,8 +77,8 @@ const processWithDeepSeek = async (message: string): Promise<ParsedEvent[]> => {
 
     // Remove markdown code block syntax and any notes
     const cleanResponse = aiResponse
-      .replace(/```json\n?|\n?```/g, '') // Remove code block markers
-      .replace(/\*Note:.*\*/g, '') // Remove any notes
+      .replace(/```json\n?|\n?```/g, '')
+      .replace(/\*Note:.*\*/g, '')
       .trim();
 
     console.log('Cleaned response:', cleanResponse);

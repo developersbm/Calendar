@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, MessageSquare, X } from 'lucide-react';
 import { useAppSelector } from '@/app/redux';
+import { useGetAuthUserQuery, useGetUserQuery } from "@/state/api";
+import Link from 'next/link';
 
 interface ChatBotProps {
   onEventCreate: (event: any) => Promise<void>;
@@ -15,14 +17,35 @@ interface Message {
 const ChatBot: React.FC<ChatBotProps> = ({ onEventCreate, onEventsUpdated }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      sender: 'bot',
-      text: 'Hello! I\'m your calendar assistant. I can help you create events in your calendar. Here are some examples of what you can say:\n\n• "I have a meeting tomorrow from 2pm to 3pm"\n• "I have work from 9am-5pm and then dinner from 8pm-9pm"\n• "Add a doctor appointment next Monday at 10am for 1 hour"\n\nJust type your message and I\'ll help you schedule it!'
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
+
+  const { data: authData, isLoading: isAuthLoading } = useGetAuthUserQuery({});
+  const cognitoId = authData?.user?.userId;
+  const { data: user, isLoading: isUserLoading } = useGetUserQuery(cognitoId ?? "", { skip: !cognitoId });
+  const isAuthenticated = !!user;
+  const isLoadingAuth = isAuthLoading || isUserLoading;
+
+  useEffect(() => {
+    if (!isLoadingAuth) {
+        if (isAuthenticated) {
+            setMessages([
+                {
+                  sender: 'bot',
+                  text: 'Hello! I\'m your calendar assistant. I can help you create events in your calendar. Here are some examples of what you can say:\n\n• "I have a meeting tomorrow from 2pm to 3pm"\n• "I have work from 9am-5pm and then dinner from 8pm-9pm"\n• "Add a doctor appointment next Monday at 10am for 1 hour"\n\nJust type your message and I\'ll help you schedule it!'
+                }
+            ]);
+        } else {
+            setMessages([
+                {
+                  sender: 'bot',
+                  text: 'Please sign in or sign up to use the calendar assistant.\nGo to the [Authentication Page](/auth).'
+                }
+            ]);
+        }
+    }
+  }, [isAuthenticated, isLoadingAuth]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -33,6 +56,11 @@ const ChatBot: React.FC<ChatBotProps> = ({ onEventCreate, onEventsUpdated }) => 
   }, [messages]);
 
   const handleSendMessage = async () => {
+    if (!isAuthenticated) {
+        alert("Please sign in or sign up to use the chatbot.");
+        return;
+    }
+
     if (!message.trim()) return;
 
     const userMessage = message;
@@ -40,7 +68,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ onEventCreate, onEventsUpdated }) => 
     setMessage('');
 
     try {
-      const response = await fetch('http://localhost:8000/api/events/chat', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/events/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -74,7 +102,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ onEventCreate, onEventsUpdated }) => 
             continue;
           }
 
-          const eventResponse = await fetch('http://localhost:8000/event', {
+          const eventResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/event`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -84,7 +112,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ onEventCreate, onEventsUpdated }) => 
               description: `Created from chat: ${userMessage}`,
               startTime: startTime.toISOString(),
               endTime: endTime.toISOString(),
-              calendarId: 1,
+              calendarId: user?.calendarId,
             }),
           });
 
@@ -131,7 +159,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ onEventCreate, onEventsUpdated }) => 
         
         // Then fetch and add all events
         try {
-          const calendarResponse = await fetch('http://localhost:8000/event/calendar?calendarId=1');
+          const calendarResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/event/calendar?calendarId=${user?.calendarId}`);
           if (calendarResponse.ok) {
             const calendarData = await calendarResponse.json();
             // Transform the data to match FullCalendar's expected format
@@ -205,7 +233,15 @@ const ChatBot: React.FC<ChatBotProps> = ({ onEventCreate, onEventsUpdated }) => 
                       : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
                   }`}
                 >
-                  <p className="whitespace-pre-wrap">{msg.text}</p>
+                  {msg.sender === 'bot' && !isAuthenticated && msg.text.includes('[Authentication Page]') ? (
+                    <p className="whitespace-pre-wrap">
+                      Please sign in or sign up to use the calendar assistant.
+                      <br />
+                      Go to the <Link href="/auth" className="text-blue-400 hover:underline font-bold">Authentication Page</Link>.
+                    </p>
+                  ) : (
+                    <p className="whitespace-pre-wrap">{msg.text}</p>
+                  )}
                 </div>
               </div>
             ))}
@@ -218,13 +254,15 @@ const ChatBot: React.FC<ChatBotProps> = ({ onEventCreate, onEventsUpdated }) => 
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Type your message..."
+                placeholder={isAuthenticated ? "Type your message..." : "Sign in to chat"}
                 className="flex-1 p-2 border dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white resize-none"
                 rows={1}
+                disabled={!isAuthenticated || isLoadingAuth}
               />
               <button
                 onClick={handleSendMessage}
-                className="bg-blue-500 hover:bg-blue-600 text-white rounded-lg p-2 transition-colors duration-200"
+                className={`text-white rounded-lg p-2 transition-colors duration-200 ${!isAuthenticated || isLoadingAuth ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'}`}
+                disabled={!isAuthenticated || isLoadingAuth}
               >
                 <Send className="w-5 h-5" />
               </button>

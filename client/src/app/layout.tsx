@@ -6,7 +6,7 @@ import RootLayoutClient from "./rootLayoutClient";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "CALENDAR",
+  title: "Timely",
   icons: {
     icon: "/mainLogo.png",
   },

@@ -18,11 +18,14 @@ import {
   useGetCelebrationPlansByUserQuery,
 } from "@/state/api";
 import ChatBot from "./ChatBot";
+import { X } from "lucide-react";
 
 const CalendarComponent = () => {
   const [isModalOpen, setModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<EventClickArg | null>(null);
   const [selectedDate, setSelectedDate] = useState<DateSelectArg | undefined>(undefined);
+  const [eventToDelete, setEventToDelete] = useState<{ id: number; title: string } | null>(null);
+  const [isDemoMode, setIsDemoMode] = useState(false);
   
   const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
   
@@ -177,19 +180,55 @@ const CalendarComponent = () => {
   };
   
 
-  const handleEventDelete = useCallback(async (clickInfo: EventClickArg) => {
-    if (window.confirm(`Delete event "${clickInfo.event.title}"?`)) {
-      try {
-        console.log("Deleting event:", clickInfo.event.id);
-        await deleteEvent(Number(clickInfo.event.id)).unwrap();
-        console.log("Event deleted successfully");
-        clickInfo.event.remove();
-      } catch (error) {
-        console.error("Failed to delete event:", error);
-        alert("Failed to delete event. Please try again.");
-      }
+  const handleEventClick = useCallback((clickInfo: EventClickArg) => {
+    if (isDemoMode) {
+      const props = clickInfo.event.extendedProps;
+      const title = clickInfo.event.title;
+      const start = clickInfo.event.start;
+      const end = clickInfo.event.end;
+      alert(`Demo ${props.type === 'plan' ? 'Plan' : 'Event'}: ${title}\nDescription: ${props.description || 'N/A'}\nStart: ${start}\nEnd: ${end}`);
+      return;
     }
-  }, [deleteEvent]);
+
+    // Log event details to console for debugging
+    console.log("Event details:", {
+      id: clickInfo.event.id,
+      title: clickInfo.event.title,
+      start: clickInfo.event.startStr,
+      end: clickInfo.event.endStr,
+      extendedProps: clickInfo.event.extendedProps,
+    });
+
+    // Set the event to be deleted and show the deletion modal
+    setEventToDelete({
+      id: Number(clickInfo.event.id),
+      title: clickInfo.event.title
+    });
+  }, [isDemoMode]);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!eventToDelete || isDemoMode) return;
+    
+    try {
+      console.log("Deleting event:", eventToDelete.id);
+      await deleteEvent(eventToDelete.id).unwrap();
+      console.log("Event deleted successfully");
+      // Remove the event from the calendar
+      const eventToRemove = document.querySelector(`[data-event-id="${eventToDelete.id}"]`);
+      if (eventToRemove) {
+        eventToRemove.remove();
+      }
+    } catch (error) {
+      console.error("Failed to delete event:", error);
+      alert("Failed to delete event. Please try again.");
+    } finally {
+      setEventToDelete(null);
+    }
+  }, [deleteEvent, eventToDelete, isDemoMode]);
+
+  const handleCancelDelete = () => {
+    setEventToDelete(null);
+  };
 
   const { data: celebrationPlans } = useGetCelebrationPlansByUserQuery(user?.id ? String(user?.id) : "", { skip: !user?.id });
 
@@ -255,6 +294,11 @@ const CalendarComponent = () => {
     }
   };
 
+  useEffect(() => {
+    // Set demo mode if user is not authenticated
+    setIsDemoMode(!user);
+  }, [user]);
+
   return (
     <div className="relative">
       <div className={calendarClassNames}>
@@ -273,7 +317,7 @@ const CalendarComponent = () => {
           titleFormat={{ year: "numeric", month: "long" }}
           events={allEvents}
           select={handleDateSelect}
-          eventClick={handleEventDelete}
+          eventClick={handleEventClick}
           eventDrop={handleEventDrop}
           eventResize={handleEventResize}
           eventColor={isDarkMode ? "#374151" : "#2563EB"}
@@ -281,7 +325,6 @@ const CalendarComponent = () => {
           longPressDelay={150}
           eventLongPressDelay={200}
           selectLongPressDelay={150}
-
           height={"auto"}
           contentHeight={"auto"}
           dayMaxEventRows={true}
@@ -306,6 +349,46 @@ const CalendarComponent = () => {
             : undefined
         }
       />
+      {eventToDelete && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-60 p-4 backdrop-blur-sm">
+          <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md">
+            <div className="flex justify-between items-center p-4 border-b dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-white">Confirm Deletion</h2>
+              <button
+                onClick={handleCancelDelete}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                aria-label="Close modal"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="p-6 text-center">
+              <p className="text-gray-700 dark:text-gray-300">
+                Are you sure you want to delete the event 
+                <strong className="text-gray-900 dark:text-white mx-1">{eventToDelete.title}</strong>?
+                <br />
+                <span className="text-sm text-red-600 dark:text-red-400">(This action cannot be undone)</span>
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3 p-4 bg-gray-50 dark:bg-gray-700 rounded-b-lg">
+              <button
+                onClick={handleCancelDelete}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500 rounded-md shadow-sm transition duration-150 ease-in-out"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded-md shadow-sm transition duration-150 ease-in-out"
+              >
+                Delete Event
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

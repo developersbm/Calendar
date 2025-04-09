@@ -15,17 +15,13 @@ Timely is a comprehensive platform designed to streamline calendar management, g
 - [Server Folder Structure](#server-folder-structure)
 - [Networking & VPC](#networking--vpc)
 - [DeepSeek Chatbot Integration](#deepseek-chatbot-integration)
+- [Deployment](#deployment)
 
 ---
 
 ## 🚀 Showcase
 
-A demo video and screenshots are available showcasing the core features including:
-
-- Calendar management with event creation, editing, and viewing
-- Group collaboration through shared calendars
-- Saving plans with easy-to-track financial progress
-- Pre-made event templates (e.g., Wedding, Party) ready to customize
+Coming soon...
 
 ---
 
@@ -46,7 +42,7 @@ A demo video and screenshots are available showcasing the core features includin
 
 ## 🔐 Authentication & Users
 
-Timely employs secure user authentication using services like AWS Cognito or OAuth for safe login and user management. Key features include:
+Timely employs secure user authentication using the service AWS Cognito for safe login and user management. Key features include:
 
 - **User Registration**: Secure account creation with email/password credentials.
 - **User Sign-In**: Authentication that verifies user identities.
@@ -198,7 +194,7 @@ The backend, built with Node.js and Express.js, serves as the engine of the plat
 ## 📁 Client Folder Structure
 
 ```bash
-PlanIt/
+Timely/
 └── client/
     ├── next                # Next.js framework files (build outputs, cache)
     ├── node_modules        # Project dependencies for the client application
@@ -243,7 +239,7 @@ PlanIt/
 ## 📂 Server Folder Structure
 
 ```bash
-PlanIt/
+Timely/
 └── server/
     ├── dist                 # Compiled JavaScript output from TypeScript source
     ├── node_modules         # Project dependencies for the server application
@@ -280,7 +276,7 @@ PlanIt/
 
 ## 🌐 Networking & VPC (AWS Setup Example)
 
-PlanIt utilizes a secure and scalable Virtual Private Cloud (VPC) setup on AWS.
+Timely utilizes a secure and scalable Virtual Private Cloud (VPC) setup on AWS.
 
 -   **VPC (`pm_vpc`)**: Provides an isolated network environment.
     -   `IPv4 CIDR`: `10.0.0.0/16` (Defines the private IP address range for the VPC)
@@ -316,10 +312,6 @@ PlanIt utilizes a secure and scalable Virtual Private Cloud (VPC) setup on AWS.
     -   Configure integration with the EC2 instance (e.g., HTTP proxy integration using the EC2's public DNS or IP).
     -   Path: `/`, Resource: `{proxy+}` for catch-all routing. Enable CORS.
 -   **EC2 Server Configuration (`.env`)**:
-    ```
-    PORT=80 # Or the port your application listens on
-    DATABASE_URL="postgresql://<user>:<password>@<rds_endpoint>:<port>/<database_name>?schema=public"
-    ```
 
 [🔝 Back to top](#timely)
 
@@ -333,6 +325,47 @@ The backend is designed with future chatbot integration in mind.
     -   Example: User inputs `"I have work from 9am-5pm and then dinner from 8pm-9pm"`.
     -   An integrated chatbot (like DeepSeek or Amazon Lex) would parse this text, extract event details (title, start time, end time), and interact with the backend API to create these events in the user's calendar.
 -   **Current Status**: Placeholder endpoints or hooks might exist in the backend codebase to facilitate this integration when the feature is developed.
+
+[🔝 Back to top](#timely)
+
+---
+
+## 🚀 Deployment
+
+### AWS EC2 Instance
+
+The backend server is hosted on an AWS EC2 instance, providing:
+- Scalable compute capacity in the cloud
+- Secure hosting environment with configured security groups
+- Easy integration with other AWS services
+- Cost-effective solution for hosting Node.js applications
+
+### PM2 Process Manager
+
+PM2 is used to manage the Node.js application in production:
+- **Process Management**: Keeps the application running continuously
+- **Auto-restart**: Automatically restarts the server if it crashes
+- **Load Balancing**: Can run multiple instances of the app for better performance
+- **Monitoring**: Provides real-time monitoring of application metrics
+- **Log Management**: Manages application logs effectively
+
+### Deployment Process
+
+1. **EC2 Setup**:
+   - Launch EC2 instance with appropriate security groups
+   - Configure SSH access and network settings
+   - Install Node.js, npm, and PM2
+
+2. **Application Deployment**:
+   - Clone repository to EC2 instance
+   - Install dependencies
+   - Build the application
+   - Start the server using PM2
+
+3. **Monitoring**:
+   - Use PM2 to monitor application health
+   - Set up automatic restarts
+   - Configure log rotation
 
 [🔝 Back to top](#timely)
 

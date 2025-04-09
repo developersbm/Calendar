@@ -73,7 +73,7 @@ export const testUser: TestUser = {
 export const testEvents: TestEvent[] = [
   {
     id: 1,
-    title: 'Team Meeting',
+    title: 'Meeting',
     description: 'Weekly team sync',
     startTime: new Date().toISOString(),
     endTime: new Date(new Date().getTime() + 60 * 60 * 1000).toISOString(),
@@ -82,7 +82,7 @@ export const testEvents: TestEvent[] = [
   },
   {
     id: 2,
-    title: 'Lunch with Friends',
+    title: 'Lunch',
     description: 'Meeting with John and Sarah',
     startTime: new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString(),
     endTime: new Date(new Date().getTime() + 25 * 60 * 60 * 1000).toISOString(),
@@ -91,7 +91,7 @@ export const testEvents: TestEvent[] = [
   },
   {
     id: 3,
-    title: 'Project Deadline',
+    title: 'Deadline',
     description: 'Final project submission',
     startTime: new Date(new Date().getTime() + 3 * 24 * 60 * 60 * 1000).toISOString(),
     endTime: new Date(new Date().getTime() + 3 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000).toISOString(),
@@ -160,6 +160,13 @@ export const testSavingPlans: TestSavingPlan[] = [
         date: new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
         description: 'Monthly savings',
         type: 'DEPOSIT'
+      },
+      {
+        id: 3,
+        amount: 250,
+        date: new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+        description: 'Monthly savings',
+        type: 'WITHDRAWAL'
       }
     ]
   }
@@ -168,7 +175,7 @@ export const testSavingPlans: TestSavingPlan[] = [
 export const testCelebrationPlans: TestCelebrationPlan[] = [
   {
     id: 1,
-    title: 'Birthday Party',
+    title: 'Birthday',
     description: '30th Birthday Celebration',
     startTime: new Date(new Date().getTime() + 14 * 24 * 60 * 60 * 1000).toISOString(),
     endTime: new Date(new Date().getTime() + 14 * 24 * 60 * 60 * 1000 + 6 * 60 * 60 * 1000).toISOString(),

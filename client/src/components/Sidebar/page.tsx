@@ -31,7 +31,6 @@ import { signOut } from "aws-amplify/auth";
 
 const Sidebar = () => {
   const [showGroups, setShowGroups] = useState(true);
-  const [showCelebrationPlans, setShowCelebrationPlans] = useState(true);
 
   const { data: authData } = useGetAuthUserQuery({});
   const userId = authData?.user?.userId;
@@ -71,7 +70,7 @@ const Sidebar = () => {
       <div className="flex h-[100%] w-full flex-col justify-start">
         {/* TOP LOGO */}
         <div className="z-50 flex min-h-[56px] w-64 items-center justify-between bg-white px-6 pt-3 dark:bg-black">
-          <div className="text-xl font-bold text-gray-800 dark:text-white">CALENDAR APP</div>
+          <div className="text-xl font-bold text-gray-800 dark:text-white">TIMELY</div>
           {isSidebarCollapsed ? null : (
             <button
               className="py-3"

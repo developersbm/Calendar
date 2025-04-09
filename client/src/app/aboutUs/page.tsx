@@ -17,18 +17,23 @@ const AboutPage = () => {
         Our mission is to simplify planning and coordination, making life easier for individuals, teams, and businesses.
       </p>
 
-      {/* Meet Our Team Section */}
-      <section className="mt-16 text-center">
-        <h2 className="text-4xl font-bold">Meet Our Team</h2>
+      <section className="mt-16 w-full max-w-4xl mx-auto text-center">
+        <h2 className="text-4xl font-bold">About the Developers</h2>
 
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {/* Developer */}
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8 md:max-w-3xl mx-auto">
+
           <TeamMemberCard
             image={sbm}
             name="Sebastian Bastida Marin"
-            role="Developer"
-            description="Sebastian is the sole developer behind this website, ensuring smooth performance and great features."
+            role="Full Stack Developer"
+            description="Sebastian designed and developed the core functionalities and infrastructure of the Timely application."
             linkedin="https://www.linkedin.com/in/sebastian-bastida/"
+          />
+          <TeamMemberCard
+            image={profile}
+            name="Sammy Abderrahman"
+            role="Chief"
+            description="Sammy assisted."
           />
         </div>
       </section>

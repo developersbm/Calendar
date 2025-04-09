@@ -54,16 +54,7 @@ const Navbar = () => {
       </div>
     {/* Navbar User Info */}
     <div className="flex items-center">
-    {/* <button
-        onClick={() => dispatch(setIsDarkMode(!isDarkMode))}
-        className={
-          isDarkMode
-            ? `rounded p-2 dark:hover:bg-gray-700`
-            : `rounded p-2 hover:bg-gray-100`
-        }
-      >
-      <Bell className="h-6 w-6 cursor-pointer dark:text-white" />
-      </button> */}
+
       <button
         onClick={() => dispatch(setIsDarkMode(!isDarkMode))}
         className={
