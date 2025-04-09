@@ -414,7 +414,7 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({ onViewChange }) =
       <div className={calendarClassNames}>
         {isUserError && <p className="text-red-500">Failed to fetch user information.</p>}
         {isDemoMode && (
-          <div className="mb-4 p-3 text-center bg-yellow-100 border border-yellow-300 text-yellow-800 rounded-lg">
+          <div className="mt-4 mb-4 p-3 text-center bg-yellow-100 border border-yellow-300 text-yellow-800 rounded-lg">
             Showing Demo Data. <Link href="/auth" className="font-bold underline">Sign in</Link> or <Link href="/auth" className="font-bold underline">Sign up</Link> to manage your calendar.
           </div>
         )}

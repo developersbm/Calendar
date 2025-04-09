@@ -31,6 +31,11 @@ app.get("/", (req, res) => {
     res.send("This is home route");
 });
 
+// Health check endpoint
+app.get("/health", (req, res) => {
+    res.status(200).json({ status: "ok" });
+});
+
 app.use("/calendar", calendarRoutes);
 app.use("/eventParticipant", eventParticipant);
 app.use("/event", eventRoutes);
