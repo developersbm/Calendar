@@ -15,7 +15,7 @@ import { ChevronUp, ChevronDown, Trash2, X } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import * as testData from "../../data/testData";
 import Link from "next/link";
-import CelebrationPlanModal from "../add-plan/page";
+import CelebrationPlanModal from "@/components/CelebrationPlanModal/page";
 
 interface PlanToDelete {
     id: number;
