@@ -9,13 +9,27 @@ Timely is a comprehensive platform designed to streamline calendar management, g
 - [Starting Server](#starting-server)
 - [Authentication & Users](#authentication--users)
 - [Core Features](#core-features)
+  - [Frontend](#frontend)
+  - [Backend](#backend)
+  - [Cloud Computing](#cloud-computing)
+  - [Architecture Diagram](#architecture-diagram)
 - [Frontend Overview](#frontend-overview)
+  - [What It Does](#what-it-does)
+  - [Design Priorities](#design-priorities)
+  - [State Management with Redux](#state-management-with-redux)
 - [Backend Overview](#backend-overview)
+  - [What It Does](#what-it-does-1)
+  - [Key Components](#key-components)
+  - [Example Route Handlers](#example-route-handlers)
 - [Client Folder Structure](#client-folder-structure)
 - [Server Folder Structure](#server-folder-structure)
 - [Networking & VPC](#networking--vpc)
+  - [Configuration Notes](#configuration-notes)
 - [DeepSeek Chatbot Integration](#deepseek-chatbot-integration)
 - [Deployment](#deployment)
+  - [AWS EC2 Instance](#aws-ec2-instance)
+  - [PM2 Process Manager](#pm2-process-manager)
+- [License](#license)
 
 ---
 
@@ -350,9 +364,12 @@ PM2 is used to manage the Node.js application in production:
 
 ---
 
+## 📄 License
 
 Copyright (c) 2025 Sebastian Bastida Marin
 
 All rights reserved.
 
 This code is proprietary and confidential. No permission is granted to use, copy, modify, or distribute this code, in whole or in part, for any purpose without explicit written permission from the author.
+
+[🔝 Back to top](#timely)
