@@ -21,7 +21,7 @@ Timely is a comprehensive platform designed to streamline calendar management, g
 
 ## 🚀 Showcase
 
-Coming soon...
+https://github.com/user-attachments/assets/206b1914-614f-449f-bc5f-9a2765fc20d1
 
 ---
 
@@ -60,6 +60,7 @@ This section outlines the project's current features, covering both the frontend
 
 - **What it does**: The frontend is the interface users interact with. It allows users to:
     - Manage their Calendar (create, edit, and view events).
+    - Interact with a chatbot (create events).
     - Work with Groups (interact with shared calendars or plans for a group of people).
     - Set up and monitor Saving Plans (track financial goals or progress).
 - **Design priorities**:
@@ -74,7 +75,7 @@ This section outlines the project's current features, covering both the frontend
     - Managing user authentication securely (e.g., logging in and verifying users).
     - Interacting with the database to store and fetch information about calendars, templates, groups, and saving plans.
 - **Security**:
-    - User authentication uses secure services like AWS Cognito or OAuth.
+    - User authentication uses secure services like AWS Cognito.
     - Data is stored safely using cloud-based database solutions like AWS RDS.
 
 ### Cloud Computing
@@ -82,22 +83,15 @@ This section outlines the project's current features, covering both the frontend
 - **Why it's used**: To ensure the app is scalable, always available, and capable of handling user data without performance issues.
 - **Current Cloud Setup**:
     - Stores user and app data in a reliable database (AWS RDS).
-    - Provides hosting for the app's backend (AWS EC2) and frontend (deployment platform like Vercel or AWS Amplify).
+    - Provides hosting for the app's backend (AWS EC2) and frontend (deployment platform AWS Amplify).
     - Securely manages user sessions and authentication.
+ 
+  
+[🔝 Back to top](#timely)
 
-### Third-party APIs
+### Architecture Diagram
 
-- **What they're for**: To save development time and provide essential services. The project may include:
-    - Google APIs: For potential calendar syncing or map integration.
-    - Authentication APIs: Like Clerk, for secure logins (if Cognito/OAuth are not used).
-    - Any other APIs will only be added after consulting with the client.
-
-### Currently Not Implemented:
-
-- **AI features**: Generative AI or chatbot functionalities (like DeepSeek integration) are planned for the future.
-- **Membership or payment systems**: These features are not part of the current implementation.
-
-The application provides a functional, secure, and user-friendly experience with its core features operational, laying the groundwork for future enhancements.
+![Diagram](https://github.com/user-attachments/assets/0e5f4298-f0db-43eb-b513-418b30423f66)
 
 [🔝 Back to top](#timely)
 
@@ -317,9 +311,7 @@ Timely utilizes a secure and scalable Virtual Private Cloud (VPC) setup on AWS.
 
 ---
 
-## 🤖 DeepSeek Chatbot Integration (Planned Feature)
-
-The backend is designed with future chatbot integration in mind.
+## 🤖 DeepSeek Chatbot Integration
 
 -   **Goal**: To allow users to create calendar events using natural language input.
     -   Example: User inputs `"I have work from 9am-5pm and then dinner from 8pm-9pm"`.
@@ -349,20 +341,7 @@ PM2 is used to manage the Node.js application in production:
 - **Monitoring**: Provides real-time monitoring of application metrics
 - **Log Management**: Manages application logs effectively
 
-### Deployment Process
-
-1. **EC2 Setup**:
-   - Launch EC2 instance with appropriate security groups
-   - Configure SSH access and network settings
-   - Install Node.js, npm, and PM2
-
-2. **Application Deployment**:
-   - Clone repository to EC2 instance
-   - Install dependencies
-   - Build the application
-   - Start the server using PM2
-
-3. **Monitoring**:
+**Monitoring**:
    - Use PM2 to monitor application health
    - Set up automatic restarts
    - Configure log rotation
@@ -370,3 +349,10 @@ PM2 is used to manage the Node.js application in production:
 [🔝 Back to top](#timely)
 
 ---
+
+
+Copyright (c) 2025 Sebastian Bastida Marin
+
+All rights reserved.
+
+This code is proprietary and confidential. No permission is granted to use, copy, modify, or distribute this code, in whole or in part, for any purpose without explicit written permission from the author.
