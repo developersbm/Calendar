@@ -1,17 +1,22 @@
 "use client"
 import { useParams } from "next/navigation";
 import GroupCalendarComponent from "@/components/GroupCalendarComponent/page";
+import { useState } from "react";
 
 const GroupCalendarScreen = () => {
   const params = useParams();
   const groupId = params?.groupId;
 
+  const [currentView, setCurrentView] = useState('dayGridMonth');
+
+  const containerHeight = currentView === 'dayGridMonth' ? 'h-[70vh]' : 'h-[160vh]';
+
   if (!groupId) return <p>Loading...</p>;
 
   return (
-    <div className="h-[130vh]">
+    <div className={containerHeight}>
       <div className="flex justify-center items-center">
-        <GroupCalendarComponent groupId={Number(groupId)} />
+        <GroupCalendarComponent groupId={Number(groupId)} onViewChange={setCurrentView} />
       </div>
     </div>
   );

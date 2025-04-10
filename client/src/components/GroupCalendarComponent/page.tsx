@@ -17,11 +17,21 @@ import {
   useUpdateEventMutation,
   useGetMembersByGroupQuery,
 } from "@/state/api";
+import { testGroups, testEvents } from "@/data/testData";
+import Link from "next/link";
 
-const GroupCalendarComponent = ({ groupId }: { groupId: number }) => {
+const GroupCalendarComponent = ({ 
+  groupId,
+  onViewChange 
+}: { 
+  groupId: number;
+  onViewChange?: (view: string) => void;
+}) => {
   const [isModalOpen, setModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<EventClickArg | null>(null);
   const [selectedDate, setSelectedDate] = useState<DateSelectArg | undefined>(undefined);
+  const [isDemoMode, setIsDemoMode] = useState(false);
+  const [demoEvents, setDemoEvents] = useState<any[]>([]);
 
   const { data: groupMembers } = useGetMembersByGroupQuery(groupId, { skip: !groupId });
   
@@ -33,9 +43,58 @@ const GroupCalendarComponent = ({ groupId }: { groupId: number }) => {
   const { data: authData } = useGetAuthUserQuery({});
   const userId = authData?.user?.userId;
 
-  const { data: user, isError: isUserError } = useGetUserQuery(userId ?? "", { skip: !userId });
+  const { data: user, isError: isUserError, isLoading: isUserLoading } = useGetUserQuery(userId ?? "", { skip: !userId });
 
   const { refetch } = useGetEventCalendarQuery(user?.calendarId as number, { skip: !user?.calendarId });
+
+  useEffect(() => {
+    const demoMode = !user && !isUserLoading;
+    setIsDemoMode(demoMode);
+
+    if (demoMode) {
+      // Find the test group that matches the current groupId
+      const testGroup = testGroups.find(group => group.id === groupId);
+      if (testGroup) {
+        // Format test events for demo display from all members
+        const formattedDemoEvents = testGroup.members.flatMap(member => 
+          testGroup.events.map(event => ({
+            id: `${member.id}-${event.id}`,
+            title: `${member.name} - ${event.title}`,
+            start: new Date(event.startTime).toISOString(),
+            end: new Date(event.endTime).toISOString(),
+            color: member.id === testGroup.members[0].id ? '#bd1c14' : '#21bd14', // Different colors for different members
+            extendedProps: {
+              description: event.description,
+              participants: event.participants,
+              memberName: member.name,
+            },
+          }))
+        );
+
+        // Add test celebration plans from testEvents for all members
+        const testCelebrationPlans = testGroup.members.flatMap(member =>
+          testEvents
+            .filter(event => event.participants && event.participants.length > 0)
+            .map(event => ({
+              id: `plan-${member.id}-${event.id}`,
+              title: `🎉 ${member.name} - ${event.title}`,
+              start: new Date(event.startTime).toISOString(),
+              end: new Date(event.endTime).toISOString(),
+              color: member.id === testGroup.members[0].id ? '#FFD700' : '#FFA500', // Different colors for different members' celebration plans
+              extendedProps: {
+                description: event.description,
+                participants: event.participants,
+                memberName: member.name,
+              },
+            }))
+        );
+
+        setDemoEvents([...formattedDemoEvents, ...testCelebrationPlans]);
+      }
+    } else {
+      setDemoEvents([]);
+    }
+  }, [user, isUserLoading, groupId]);
   
   const memberColors = useMemo(() => {
     const colors = ["#bd1c14", "#21bd14", "#085090", "#370890", "#900871"];
@@ -49,31 +108,37 @@ const GroupCalendarComponent = ({ groupId }: { groupId: number }) => {
   }, [groupMembers]);  
 
   // 🎯 Combine and format all events
-  const allGroupEvents = groupMembers
-  ? groupMembers.flatMap((member) =>
-      member.events?.map((event) => ({
-        id: event.id.toString(),
-        title: `${member.name} - ${event.title}`,
-        start: new Date(event.startTime).toISOString(),
-        end: new Date(event.endTime).toISOString(),
-        color: memberColors[member.userId],
-        extendedProps: {
-          description: event.description,
-          recurrence: event.recurrence,
-          participants: event.participants,
-        },
-      })) || []
-    )
-  : [];
+  const allGroupEvents = isDemoMode 
+    ? demoEvents 
+    : groupMembers
+      ? groupMembers.flatMap((member) =>
+          member.events?.map((event) => ({
+            id: event.id.toString(),
+            title: `${member.name} - ${event.title}`,
+            start: new Date(event.startTime).toISOString(),
+            end: new Date(event.endTime).toISOString(),
+            color: memberColors[member.userId],
+            extendedProps: {
+              description: event.description,
+              recurrence: event.recurrence,
+              participants: event.participants,
+            },
+          })) || []
+        )
+      : [];
 
   const handleDateSelect = useCallback((selectInfo: DateSelectArg) => {
+    if (isDemoMode) {
+      alert("Please sign in or sign up to add events.");
+      return;
+    }
+
     console.log("Selected Date Info from FullCalendar:", selectInfo);
   
     const startDateTime = new Date(selectInfo.startStr);
     let endDateTime = new Date(selectInfo.endStr);
   
     if (selectInfo.allDay) {
-      // FullCalendar treats end as exclusive, so subtract a day to match user intent
       endDateTime.setDate(endDateTime.getDate() - 1);
     }
   
@@ -86,15 +151,21 @@ const GroupCalendarComponent = ({ groupId }: { groupId: number }) => {
     });
   
     setModalOpen(true);
-  }, []);
+  }, [isDemoMode]);
 
   const handleEventDrop = useCallback(async (dropInfo: EventDropArg) => {
+    if (isDemoMode) {
+      alert("Please sign in or sign up to modify events.");
+      dropInfo.revert();
+      return;
+    }
+
     const { event } = dropInfo;
     const eventOwnerId = event.extendedProps?.ownerId;
   
     if (eventOwnerId !== user?.id) {
       alert("You can only edit your own events.");
-      dropInfo.revert(); // Revert the drop
+      dropInfo.revert();
       return;
     }
   
@@ -118,15 +189,21 @@ const GroupCalendarComponent = ({ groupId }: { groupId: number }) => {
       console.error("Failed to update event:", error);
       alert("Failed to update event. Please try again.");
     }
-  }, [updateEvent, user?.id]);
+  }, [updateEvent, user?.id, isDemoMode]);
 
   const handleEventResize = useCallback(async (resizeInfo: EventResizeDoneArg) => {
+    if (isDemoMode) {
+      alert("Please sign in or sign up to modify events.");
+      resizeInfo.revert();
+      return;
+    }
+
     const { event } = resizeInfo;
     const eventOwnerId = event.extendedProps?.ownerId;
   
     if (eventOwnerId !== user?.id) {
       alert("You can only edit your own events.");
-      resizeInfo.revert(); // Revert the resize
+      resizeInfo.revert();
       return;
     }
   
@@ -138,7 +215,7 @@ const GroupCalendarComponent = ({ groupId }: { groupId: number }) => {
     const updatedEvent = {
       id: Number(event.id),
       startTime: event.start.toISOString(),
-      endTime: event.end.toISOString(), // The resized end time
+      endTime: event.end.toISOString(),
     };
   
     console.log("Updating event via resize:", updatedEvent);
@@ -150,9 +227,37 @@ const GroupCalendarComponent = ({ groupId }: { groupId: number }) => {
       console.error("Failed to update event:", error);
       alert("Failed to update event. Please try again.");
     }
-  }, [updateEvent, user?.id]);
+  }, [updateEvent, user?.id, isDemoMode]);
+
+  const handleEventClick = useCallback((clickInfo: EventClickArg) => {
+    if (isDemoMode) {
+      const props = clickInfo.event.extendedProps;
+      const title = clickInfo.event.title;
+      const start = clickInfo.event.start;
+      const end = clickInfo.event.end;
+      alert(`Demo Event: ${title}\nDescription: ${props.description || 'N/A'}\nStart: ${start}\nEnd: ${end}`);
+      return;
+    }
+
+    const isCelebrationPlanEvent = clickInfo.event.id.startsWith("plan-");
   
+    if (isCelebrationPlanEvent) {
+      alert("You cannot delete celebration plan events.");
+      return;
+    }
   
+    if (window.confirm(`Delete event "${clickInfo.event.title}"?`)) {
+      try {
+        console.log("Deleting event:", clickInfo.event.id);
+        deleteEvent(Number(clickInfo.event.id));
+        console.log("Event deleted successfully");
+        clickInfo.event.remove();
+      } catch (error) {
+        console.error("Failed to delete event:", error);
+        alert("Failed to delete event. Please try again.");
+      }
+    }
+  }, [deleteEvent, isDemoMode]);
 
   const handleModalSubmit = async ({
     title,
@@ -169,13 +274,18 @@ const GroupCalendarComponent = ({ groupId }: { groupId: number }) => {
     startTime: string;
     endTime: string;
   }) => {
+    if (isDemoMode) {
+      alert("Please sign in or sign up to add events.");
+      return;
+    }
+
     if (!user?.calendarId) {
       alert("User does not have an associated calendar.");
       return;
     }
   
     const eventData = {
-      id: selectedEvent?.event.id ? Number(selectedEvent.event.id) : undefined, // Convert ID to number
+      id: selectedEvent?.event.id ? Number(selectedEvent.event.id) : undefined,
       title,
       description,
       startTime: new Date(`${startDate}T${startTime}:00`).toISOString(),
@@ -185,11 +295,9 @@ const GroupCalendarComponent = ({ groupId }: { groupId: number }) => {
   
     try {
       if (selectedEvent) {
-        // Updating an existing event
         await updateEvent(eventData).unwrap();
         console.log("Event updated successfully");
       } else {
-        // Creating a new event
         await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/event`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -204,28 +312,6 @@ const GroupCalendarComponent = ({ groupId }: { groupId: number }) => {
     setModalOpen(false);
     await refetch();
   };
-  
-
-  const handleEventDelete = useCallback(async (clickInfo: EventClickArg) => {
-    const isCelebrationPlanEvent = clickInfo.event.id.startsWith("plan-");
-  
-    if (isCelebrationPlanEvent) {
-      alert("You cannot delete celebration plan events.");
-      return;
-    }
-  
-    if (window.confirm(`Delete event "${clickInfo.event.title}"?`)) {
-      try {
-        console.log("Deleting event:", clickInfo.event.id);
-        await deleteEvent(Number(clickInfo.event.id)).unwrap();
-        console.log("Event deleted successfully");
-        clickInfo.event.remove();
-      } catch (error) {
-        console.error("Failed to delete event:", error);
-        alert("Failed to delete event. Please try again.");
-      }
-    }
-  }, [deleteEvent]);
 
   const [celebrationPlansResults, setCelebrationPlansResults] = useState<Record<number, any[]>>({});
 
@@ -356,53 +442,69 @@ const GroupCalendarComponent = ({ groupId }: { groupId: number }) => {
   }, []);
 
   return (
-    <div className={calendarClassNames}>
-      {isUserError && <p className="text-red-500">Failed to fetch user information.</p>}
-      <FullCalendar
-        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-        initialView="dayGridMonth"
-        selectable={true}
-        editable={true}
-        locales={allLocales}
-        locale="en"
-        headerToolbar={{
-          left: "title",
-          right: "prev,next,today,dayGridMonth,timeGridWeek,timeGridDay",
-        }}
-        titleFormat={{ year: "numeric", month: "long" }}
-        events={allEvents}
-        select={handleDateSelect}
-        eventClick={handleEventDelete}
-        eventDrop={handleEventDrop}
-        eventResize={handleEventResize}
-        eventColor={isDarkMode ? "#4B5563" : "#2563EB"}
-        themeSystem="bootstrap5"
-        longPressDelay={150}
-        eventLongPressDelay={200}
-        selectLongPressDelay={150}
-
-        height={"auto"}
-        contentHeight={"auto"}
-        dayMaxEventRows={true}
-      />
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setModalOpen(false)}
-        onSubmit={handleModalSubmit}
-        selectedDateRange={
-          selectedEvent?.event.start
-            ? {
-                start: selectedEvent.event.start.toISOString(),
-                end: selectedEvent.event.end?.toISOString() || selectedEvent.event.start.toISOString(),
-              }
-            : selectedDate
-            ? {
-                start: selectedDate.startStr,
-                end: selectedDate.endStr,
-              }
-            : undefined
-        }
-      />
+    <div className="relative mx-auto w-[95%]">
+      <div className="mb-4">
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
+          Group Calendar
+        </h1>
+        {groupMembers && groupMembers.length > 0 && (
+          <p className="text-gray-600 dark:text-gray-300">
+            Viewing events for {groupMembers.map(member => member.name).join(", ")}
+          </p>
+        )}
+      </div>
+      <div className={`w-full h-[60vh] ${
+        isDarkMode ? "bg-black-300 text-white dark-mode-calendar" : "bg-grey-300 text-black"
+      }`}>
+        {isDemoMode && (
+          <div className="mt-4 mb-4 p-3 text-center bg-yellow-100 border border-yellow-300 text-yellow-800 rounded-lg">
+            Showing Demo Data. <Link href="#" className="font-bold underline">Sign in</Link> or <Link href="#" className="font-bold underline">Sign up</Link> to manage your calendar.
+          </div>
+        )}
+        <FullCalendar
+          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+          initialView="dayGridMonth"
+          selectable={!isDemoMode}
+          editable={!isDemoMode}
+          locales={allLocales}
+          locale="en"
+          headerToolbar={{
+            left: "prev,next today",
+            center: "title",
+            right: "dayGridMonth,timeGridWeek,timeGridDay",
+          }}
+          titleFormat={{ year: "numeric", month: "long" }}
+          events={allEvents}
+          select={handleDateSelect}
+          eventClick={handleEventClick}
+          eventDrop={handleEventDrop}
+          eventResize={handleEventResize}
+          eventColor={isDarkMode ? "#374151" : "#2563EB"}
+          themeSystem="bootstrap5"
+          longPressDelay={150}
+          eventLongPressDelay={200}
+          selectLongPressDelay={150}
+          selectMirror={true}
+          dayMaxEvents={true}
+          weekends={true}
+          height={"auto"}
+          contentHeight={"auto"}
+          dayMaxEventRows={true}
+          datesSet={(arg) => onViewChange?.(arg.view.type)}
+        />
+      </div>
+      {isModalOpen && selectedDate && (
+        <Modal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setModalOpen(false);
+            setSelectedEvent(null);
+            setSelectedDate(undefined);
+          }}
+          onSubmit={handleModalSubmit}
+          selectedDateRange={selectedDate ? { start: selectedDate.startStr, end: selectedDate.endStr } : undefined}
+        />
+      )}
     </div>
   );
 };

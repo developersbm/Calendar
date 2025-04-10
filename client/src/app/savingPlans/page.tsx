@@ -179,7 +179,7 @@ export default function SavingPlans() {
     <div className="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen flex flex-col space-y-6">
       {isDemoMode && (
         <div className="mb-4 p-3 text-center bg-yellow-100 border border-yellow-300 text-yellow-800 rounded-lg">
-          Showing Demo Data. <Link href="/auth" className="font-bold underline">Sign in</Link> or <Link href="/auth" className="font-bold underline">Sign up</Link> to manage your savings.
+          Showing Demo Data. <Link href="#" className="font-bold underline">Sign in</Link> or <Link href="#" className="font-bold underline">Sign up</Link> to manage your savings.
         </div>
       )}
 

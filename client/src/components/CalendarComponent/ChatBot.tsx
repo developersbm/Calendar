@@ -40,7 +40,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ onEventCreate, onEventsUpdated }) => 
             setMessages([
                 {
                   sender: 'bot',
-                  text: 'Please sign in or sign up to use the calendar assistant.\nGo to the [Authentication Page](/auth).'
+                  text: 'Please sign in or sign up to use the calendar assistant.\n'
                 }
             ]);
         }

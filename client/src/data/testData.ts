@@ -18,7 +18,7 @@ export interface TestEvent {
 
 export interface TestGroup {
   id: number;
-  name: string;
+  title: string;
   description: string;
   members: TestGroupMember[];
   events: TestEvent[];
@@ -72,67 +72,92 @@ export const testUser: TestUser = {
 
 export const testEvents: TestEvent[] = [
   {
-    id: 1,
-    title: 'Meeting',
-    description: 'Weekly team sync',
-    startTime: new Date().toISOString(),
-    endTime: new Date(new Date().getTime() + 60 * 60 * 1000).toISOString(),
-    calendarId: 1,
-    participants: ['test@example.com', 'john@example.com']
-  },
-  {
     id: 2,
-    title: 'Lunch',
-    description: 'Meeting with John and Sarah',
-    startTime: new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString(),
-    endTime: new Date(new Date().getTime() + 25 * 60 * 60 * 1000).toISOString(),
+    title: 'Project Review',
+    description: 'Review project progress',
+    startTime: new Date(new Date().getTime() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+    endTime: new Date(new Date().getTime() + 5 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000).toISOString(),
     calendarId: 1,
-    participants: ['test@example.com', 'john@example.com', 'sarah@example.com']
-  },
-  {
-    id: 3,
-    title: 'Deadline',
-    description: 'Final project submission',
-    startTime: new Date(new Date().getTime() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-    endTime: new Date(new Date().getTime() + 3 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000).toISOString(),
-    calendarId: 1
+    participants: ['sarah@example.com']
   }
 ];
 
 export const testGroups: TestGroup[] = [
   {
     id: 1,
-    name: 'Family Group',
-    description: 'Family events and gatherings',
+    title: "Family",
+    description: "This is the best family!",
     members: [
       {
         id: 1,
-        name: 'Test User',
-        email: 'test@example.com',
-        role: 'ADMIN'
+        name: "John Doe",
+        email: "john@example.com",
+        role: "ADMIN"
       },
       {
         id: 2,
-        name: 'John Smith',
-        email: 'john@example.com',
-        role: 'MEMBER'
+        name: "Sarah Smith",
+        email: "sarah@example.com",
+        role: "MEMBER"
       },
       {
         id: 3,
-        name: 'Sarah Johnson',
-        email: 'sarah@example.com',
-        role: 'MEMBER'
+        name: "Mike Johnson",
+        email: "mike@example.com",
+        role: "MEMBER"
       }
     ],
     events: [
       {
-        id: 4,
-        title: 'Family Dinner',
-        description: 'Monthly family gathering',
-        startTime: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        endTime: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000).toISOString(),
+        id: 1,
+        title: "Team Meeting",
+        description: "Weekly team sync with development team",
+        startTime: (() => {
+          const date = new Date();
+          date.setHours(10, 0, 0, 0);
+          return date.toISOString();
+        })(),
+        endTime: (() => {
+          const date = new Date();
+          date.setHours(11, 0, 0, 0);
+          return date.toISOString();
+        })(),
         calendarId: 1,
-        participants: ['test@example.com', 'john@example.com', 'sarah@example.com']
+        participants: ['mike@example.com']
+      },
+      {
+        id: 2,
+        title: "Client Presentation",
+        description: "Present quarterly results",
+        startTime: (() => {
+          const date = new Date(new Date().getTime() + 24 * 60 * 60 * 1000);
+          date.setHours(14, 0, 0, 0);
+          return date.toISOString();
+        })(),
+        endTime: (() => {
+          const date = new Date(new Date().getTime() + 24 * 60 * 60 * 1000);
+          date.setHours(15, 0, 0, 0);
+          return date.toISOString();
+        })(),
+        calendarId: 1,
+        participants: ['john@example.com']
+      },
+      {
+        id: 3,
+        title: "Project Planning",
+        description: "Plan next sprint",
+        startTime: (() => {
+          const date = new Date(new Date().getTime() + 48 * 60 * 60 * 1000);
+          date.setHours(9, 30, 0, 0);
+          return date.toISOString();
+        })(),
+        endTime: (() => {
+          const date = new Date(new Date().getTime() + 48 * 60 * 60 * 1000);
+          date.setHours(10, 30, 0, 0);
+          return date.toISOString();
+        })(),
+        calendarId: 1,
+        participants: ['sarah@example.com']
       }
     ]
   }

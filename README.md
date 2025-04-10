@@ -9,19 +9,35 @@ Timely is a comprehensive platform designed to streamline calendar management, g
 - [Starting Server](#starting-server)
 - [Authentication & Users](#authentication--users)
 - [Core Features](#core-features)
+  - [Frontend](#frontend)
+  - [Backend](#backend)
+  - [Cloud Computing](#cloud-computing)
+  - [Architecture Diagram](#architecture-diagram)
 - [Frontend Overview](#frontend-overview)
+  - [What It Does](#what-it-does)
+  - [Design Priorities](#design-priorities)
+  - [State Management with Redux](#state-management-with-redux)
 - [Backend Overview](#backend-overview)
+  - [What It Does](#what-it-does-1)
+  - [Key Components](#key-components)
+  - [Example Route Handlers](#example-route-handlers)
 - [Client Folder Structure](#client-folder-structure)
 - [Server Folder Structure](#server-folder-structure)
 - [Networking & VPC](#networking--vpc)
-- [DeepSeek Chatbot Integration](#deepseek-chatbot-integration)
+  - [Configuration Notes](#configuration-notes)
+- [DeepSeek Chatbot](#deepseek-chatbot-integration)
 - [Deployment](#deployment)
+  - [AWS EC2 Instance](#aws-ec2-instance)
+  - [PM2 Process Manager](#pm2-process-manager)
+- [License](#license)
 
 ---
 
 ## 🚀 Showcase
 
-Coming soon...
+https://github.com/user-attachments/assets/206b1914-614f-449f-bc5f-9a2765fc20d1
+
+[🔝 Back to top](#timely)
 
 ---
 
@@ -60,6 +76,7 @@ This section outlines the project's current features, covering both the frontend
 
 - **What it does**: The frontend is the interface users interact with. It allows users to:
     - Manage their Calendar (create, edit, and view events).
+    - Interact with a chatbot (create events).
     - Work with Groups (interact with shared calendars or plans for a group of people).
     - Set up and monitor Saving Plans (track financial goals or progress).
 - **Design priorities**:
@@ -74,7 +91,7 @@ This section outlines the project's current features, covering both the frontend
     - Managing user authentication securely (e.g., logging in and verifying users).
     - Interacting with the database to store and fetch information about calendars, templates, groups, and saving plans.
 - **Security**:
-    - User authentication uses secure services like AWS Cognito or OAuth.
+    - User authentication uses secure services like AWS Cognito.
     - Data is stored safely using cloud-based database solutions like AWS RDS.
 
 ### Cloud Computing
@@ -82,22 +99,23 @@ This section outlines the project's current features, covering both the frontend
 - **Why it's used**: To ensure the app is scalable, always available, and capable of handling user data without performance issues.
 - **Current Cloud Setup**:
     - Stores user and app data in a reliable database (AWS RDS).
-    - Provides hosting for the app's backend (AWS EC2) and frontend (deployment platform like Vercel or AWS Amplify).
+    - Provides hosting for the app's backend (AWS EC2) and frontend (deployment platform AWS Amplify).
     - Securely manages user sessions and authentication.
+- **Services Used**:
+    - AWS RDS – for managing relational database operations and storing structured user data.
+    - AWS EC2 – to host and run backend services with full control over the environment.
+    - AWS Amplify – for seamless frontend deployment, CI/CD, and environment management.
+    - AWS Cognito – for secure user authentication, authorization, and session management.
+    - Amazon VPC – to isolate and control networking for the app with subnets and IP ranges.
+    - Security Groups – to define inbound and outbound traffic rules for EC2 instances.
+    - Route Tables – to manage traffic routing within the VPC and between subnets.
+    - Amazon API Gateway – to expose RESTful endpoints and efficiently manage API traffic.
+    - Amazon CloudWatch – to monitor logs, metrics, and system performance.
+    - IAM (Identity and Access Management) – to enforce granular access controls across AWS services.
 
-### Third-party APIs
+### Architecture Diagram
 
-- **What they're for**: To save development time and provide essential services. The project may include:
-    - Google APIs: For potential calendar syncing or map integration.
-    - Authentication APIs: Like Clerk, for secure logins (if Cognito/OAuth are not used).
-    - Any other APIs will only be added after consulting with the client.
-
-### Currently Not Implemented:
-
-- **AI features**: Generative AI or chatbot functionalities (like DeepSeek integration) are planned for the future.
-- **Membership or payment systems**: These features are not part of the current implementation.
-
-The application provides a functional, secure, and user-friendly experience with its core features operational, laying the groundwork for future enhancements.
+![Diagram](https://github.com/user-attachments/assets/0e5f4298-f0db-43eb-b513-418b30423f66)
 
 [🔝 Back to top](#timely)
 
@@ -116,7 +134,7 @@ The frontend is the user-facing component built with Next.js and React. It allow
 ### Design Priorities
 
 - **Responsiveness**: Optimized for desktop and mobile.
-- **Templates Feature**: Pre-made customizable event layouts (e.g., "Wedding").
+- **Celebration Plan Feature**: Pre-made customizable event layouts
 - **Modern Frameworks**: Built using Next.js and React for performance and scalability.
 
 ### State Management with Redux
@@ -212,7 +230,7 @@ Timely/
     │   │   ├── page.tsx                  # Home page or landing page component
     │   │   ├── redux.tsx                 # Redux store setup and provider configuration
     │   ├── components/     # Reusable UI components shared across different pages
-    │   │   ├── CalendarComponent/page.tsx# The main interactive calendar component
+    │   │   ├── CalendarComponent/page.tsx # The main interactive calendar component
     │   │   ├── Modal/page.tsx            # Reusable modal component
     │   │   ├── Navbar/page.tsx           # Top navigation bar component
     │   │   ├── Sidebar/page.tsx          # Side navigation bar component
@@ -301,30 +319,15 @@ Timely utilizes a secure and scalable Virtual Private Cloud (VPC) setup on AWS.
     -   `pm_rds-sg`: Allows inbound traffic on the database port (e.g., 5432 for PostgreSQL) only from trusted sources, typically the EC2 instance's security group (`pm_ec2-sg`). Restricts outbound traffic.
 -   **Network ACLs (NACLs)**: Optional stateless firewall layer for subnets, providing an additional layer of security (can be used for blacklisting specific IPs).
 
-### Configuration Notes:
-
--   **Making RDS Public (Generally Not Recommended for Production)**:
-    -   Modify `pm_rds-sg` inbound rules to allow PostgreSQL traffic (`TCP 5432`) from `0.0.0.0/0`.
-    -   Ensure the RDS instance is placed in a public subnet (or associate the private subnet it's in with the public route table).
-    -   Enable "DNS hostnames" in VPC settings.
--   **API Gateway**: Can be used as a managed entry point for the backend API.
-    -   Set up a REST API or HTTP API.
-    -   Configure integration with the EC2 instance (e.g., HTTP proxy integration using the EC2's public DNS or IP).
-    -   Path: `/`, Resource: `{proxy+}` for catch-all routing. Enable CORS.
--   **EC2 Server Configuration (`.env`)**:
-
 [🔝 Back to top](#timely)
 
 ---
 
-## 🤖 DeepSeek Chatbot Integration (Planned Feature)
+## 🤖 DeepSeek Chatbot Integration
 
-The backend is designed with future chatbot integration in mind.
-
--   **Goal**: To allow users to create calendar events using natural language input.
+-   **What it does**: Allow users to create calendar events using natural language input.
     -   Example: User inputs `"I have work from 9am-5pm and then dinner from 8pm-9pm"`.
-    -   An integrated chatbot (like DeepSeek or Amazon Lex) would parse this text, extract event details (title, start time, end time), and interact with the backend API to create these events in the user's calendar.
--   **Current Status**: Placeholder endpoints or hooks might exist in the backend codebase to facilitate this integration when the feature is developed.
+    -   An integrated chatbot (DeepSeek) parses this text, extract event details (title, start time, end time), and interact with the backend API to create these events in the user's calendar.
 
 [🔝 Back to top](#timely)
 
@@ -349,20 +352,7 @@ PM2 is used to manage the Node.js application in production:
 - **Monitoring**: Provides real-time monitoring of application metrics
 - **Log Management**: Manages application logs effectively
 
-### Deployment Process
-
-1. **EC2 Setup**:
-   - Launch EC2 instance with appropriate security groups
-   - Configure SSH access and network settings
-   - Install Node.js, npm, and PM2
-
-2. **Application Deployment**:
-   - Clone repository to EC2 instance
-   - Install dependencies
-   - Build the application
-   - Start the server using PM2
-
-3. **Monitoring**:
+**Monitoring**:
    - Use PM2 to monitor application health
    - Set up automatic restarts
    - Configure log rotation
@@ -370,3 +360,13 @@ PM2 is used to manage the Node.js application in production:
 [🔝 Back to top](#timely)
 
 ---
+
+## 📄 License
+
+Copyright (c) 2025 Sebastian Bastida Marin
+
+All rights reserved.
+
+This code is proprietary and confidential. No permission is granted to use, copy, modify, or distribute this code, in whole or in part, for any purpose without explicit written permission from the author.
+
+[🔝 Back to top](#timely)

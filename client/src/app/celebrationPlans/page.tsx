@@ -281,7 +281,7 @@ const CelebrationPlansPage = () => {
     <div className="p-4 dark:bg-gray-900 dark:text-white min-h-screen">
       {isDemoMode && (
         <div className="mb-4 p-3 text-center bg-yellow-100 border border-yellow-300 text-yellow-800 rounded-lg">
-          Showing Demo Data. <Link href="/auth" className="font-bold underline">Sign in</Link> or <Link href="/auth" className="font-bold underline">Sign up</Link> to manage your plans.
+          Showing Demo Data. <Link href="#" className="font-bold underline">Sign in</Link> or <Link href="#" className="font-bold underline">Sign up</Link> to manage your plans.
         </div>
       )}
       <div className="flex justify-between items-center mb-2">

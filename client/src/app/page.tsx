@@ -37,14 +37,14 @@ export default function Home() {
           </h2>
           <div className="space-y-2 text-yellow-700 dark:text-yellow-200">
              <p>You are currently viewing demo data. Features like adding or modifying data are disabled.</p>
-             <p>To activate the live server (using AWS EC2 and RDS) for a full review, please contact me! <em>(AWS services cost money, so the project defaults to demo mode.)</em></p>
+             <p>To activate an account please contact: <a href="mailto:sbastida04@gmail.com" className="font-bold hover:underline">sbastida04@gmail.com</a></p>
              <p className="mt-4">
-              For more information and a video walkthrough, please check out the 
+              For additional information / documentation and a video walkthrough, please check out the 
               <a 
                 href="https://github.com/developersbm/Timely" 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="font-bold text-blue-600 dark:text-blue-400 hover:underline ml-1"
+                className="font-bold hover:underline ml-1"
               >
                  GitHub Repository
                </a>.

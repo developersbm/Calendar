@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   ChevronDown,
   ChevronUp,
@@ -28,9 +28,12 @@ import {
 import { useAppDispatch, useAppSelector } from "@/app/redux";
 import { setIsSidebarCollapsed } from "@/state";
 import { signOut } from "aws-amplify/auth";
+import { testGroups } from "@/data/testData";
 
 const Sidebar = () => {
   const [showGroups, setShowGroups] = useState(true);
+  const [isDemoMode, setIsDemoMode] = useState(false);
+  const [demoGroups, setDemoGroups] = useState<any[]>([]);
 
   const { data: authData } = useGetAuthUserQuery({});
   const userId = authData?.user?.userId;
@@ -47,15 +50,36 @@ const Sidebar = () => {
     (state) => state.global.isSidebarCollapsed
   );
 
+  useEffect(() => {
+    const demoMode = !user && !isUserLoading;
+    setIsDemoMode(demoMode);
+
+    if (demoMode) {
+      // Format test groups for demo display
+      const formattedDemoGroups = testGroups.map(group => ({
+        id: group.id,
+        title: group.title,
+        description: group.description,
+        members: group.members,
+        events: group.events,
+      }));
+      setDemoGroups(formattedDemoGroups);
+    } else {
+      setDemoGroups([]);
+    }
+  }, [user, isUserLoading]);
+
   const sidebarClassNames = `fixed top-0 left-0 flex flex-col h-full z-40 transition-transform duration-300 
     shadow-xl dark:bg-black bg-white overflow-y-auto
     ${isSidebarCollapsed ? "-translate-x-full" : "translate-x-0"}
     w-64
   `;
 
-  const userGroups = groupMembers
-    ?.filter((gm) => gm.userId === user?.id && gm.status === "Active")
-    .map((gm) => groups?.find((g) => g.id === gm.groupId)) || [];
+  const userGroups = isDemoMode 
+    ? demoGroups
+    : groupMembers
+        ?.filter((gm) => gm.userId === user?.id && gm.status === "Active")
+        .map((gm) => groups?.find((g) => g.id === gm.groupId)) || [];
 
   const handleSignOut = async () => {
     try {
@@ -96,6 +120,7 @@ const Sidebar = () => {
         ) : (
           <div className="flex flex-col items-center gap-2 px-10 py-4 text-sm text-gray-500">
             <p className="mb-2 text-center">Sign in to access personalized features</p>
+            <p className="text-xs text-gray-400">Demo mode active</p>
           </div>
         )}
 
@@ -148,16 +173,15 @@ const Sidebar = () => {
           </div>
         )}
 
-
-      {/* About Us */}
-      <div className="mt-auto">
-        <Link href="/aboutUs">
+        {/* About Us */}
+        <div className="mt-auto">
+          <Link href="/aboutUs">
             <button
               className="flex w-full items-center gap-3 px-8 py-3 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
             >About Us
             </button>
-        </Link>        
-      </div>
+          </Link>        
+        </div>
       </div>
     </div>
   );

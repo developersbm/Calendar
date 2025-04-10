@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Menu, Moon, Settings, Sun, User, Bell, X } from "lucide-react";
+import { Menu, Moon, Settings, Sun, User, X } from "lucide-react";
 import Link from "next/link";
 import { useAppDispatch, useAppSelector } from "@/app/redux";
 import { setIsDarkMode, setIsSidebarCollapsed } from "@/state";
@@ -20,7 +20,13 @@ interface User {
   profilePicture?: string;
 }
 
-const ServerStatusModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+const ServerStatusModal = ({
+  isOpen,
+  onClose,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+}) => {
   if (!isOpen) return null;
 
   return (
@@ -38,7 +44,7 @@ const ServerStatusModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =
         </div>
         <div className="p-6 text-center">
           <p className="text-gray-700 dark:text-gray-300">
-            The server is currently inactive. Please contact the project owner to activate it.
+            Please contact the project owner to activate an account.
           </p>
         </div>
         <div className="flex justify-end p-4 bg-gray-50 dark:bg-gray-700 rounded-b-lg">
@@ -56,12 +62,12 @@ const ServerStatusModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =
 
 const Navbar = () => {
   const dispatch = useAppDispatch();
-  const isSidebarCollapsed = useAppSelector(
-    (state) => state.global.isSidebarCollapsed
-  );
+  const isSidebarCollapsed = useAppSelector((state) => state.global.isSidebarCollapsed);
   const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
   const [isServerModalOpen, setIsServerModalOpen] = useState(false);
-  const [isServerActive, setIsServerActive] = useState(true);
+
+  // Hardcode server status
+  const [isServerActive, setIsServerActive] = useState(false); // Change to true when needed
 
   const { data: authData } = useGetAuthUserQuery({});
   const userId = authData?.user?.userId;
@@ -71,20 +77,10 @@ const Navbar = () => {
   });
 
   useEffect(() => {
-    const checkServerStatus = async () => {
-      try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/health`);
-        const data = await response.json();
-        setIsServerActive(response.ok && data.status === "ok");
-      } catch (error) {
-        console.error("Error checking server status:", error);
-        setIsServerActive(false);
-      }
-    };
-    checkServerStatus();
-    
-    // Check server status every 30 seconds
-    const interval = setInterval(checkServerStatus, 30000);
+
+    const interval = setInterval(() => {
+    }, 30000);
+
     return () => clearInterval(interval);
   }, []);
 
@@ -107,22 +103,15 @@ const Navbar = () => {
     <div className="flex items-center justify-between bg-white px-4 py-3 dark:bg-black">
       <div className="flex items-center gap-8">
         {!isSidebarCollapsed ? null : (
-          <button
-            onClick={() => dispatch(setIsSidebarCollapsed(!isSidebarCollapsed))}
-          >
+          <button onClick={() => dispatch(setIsSidebarCollapsed(!isSidebarCollapsed))}>
             <Menu className="h-8 w-8 hover:text-gray-500 dark:text-white" />
           </button>
         )}
       </div>
-      {/* Navbar User Info */}
       <div className="flex items-center">
         <button
           onClick={() => dispatch(setIsDarkMode(!isDarkMode))}
-          className={
-            isDarkMode
-              ? `rounded p-2 dark:hover:bg-gray-700`
-              : `rounded p-2 hover:bg-gray-100`
-          }
+          className={`rounded p-2 ${isDarkMode ? "dark:hover:bg-gray-700" : "hover:bg-gray-100"}`}
         >
           {isDarkMode ? (
             <Sun className="h-6 w-6 cursor-pointer dark:text-white" />
@@ -132,17 +121,14 @@ const Navbar = () => {
         </button>
         <Link
           href="/settings"
-          className={
-            isDarkMode
-              ? `h-min w-min rounded p-2 dark:hover:bg-gray-700`
-              : `h-min w-min rounded p-2 hover:bg-gray-100`
-          }
+          className={`h-min w-min rounded p-2 ${
+            isDarkMode ? "dark:hover:bg-gray-700" : "hover:bg-gray-100"
+          }`}
         >
           <Settings className="h-6 w-6 cursor-pointer dark:text-white" />
         </Link>
         <div className="ml-2 mr-5 hidden min-h-[2em] w-[0.1rem] bg-gray-200 md:inline-block"></div>
 
-        {/* If the user is authenticated, show their profile and sign out */}
         {user ? (
           <div className="hidden items-center justify-between md:flex">
             <div className="align-center flex h-9 w-9 justify-center">
@@ -156,8 +142,6 @@ const Navbar = () => {
               <User className="h-6 w-6 cursor-pointer self-center rounded-full dark:text-white" />
             </div>
             <span className="mx-3 text-gray-800 dark:text-white">{user.name}</span>
-
-            {/* Sign-out button */}
             <Link
               href={"/auth"}
               onClick={handleSignOut}
@@ -167,7 +151,6 @@ const Navbar = () => {
             </Link>
           </div>
         ) : (
-          // If not authenticated, show "Sign In" and "Create Account" buttons
           <div className="flex gap-2">
             <Link
               href="/auth"
@@ -179,9 +162,9 @@ const Navbar = () => {
           </div>
         )}
       </div>
-      <ServerStatusModal 
-        isOpen={isServerModalOpen} 
-        onClose={() => setIsServerModalOpen(false)} 
+      <ServerStatusModal
+        isOpen={isServerModalOpen}
+        onClose={() => setIsServerModalOpen(false)}
       />
     </div>
   );

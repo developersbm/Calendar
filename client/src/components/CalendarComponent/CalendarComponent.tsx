@@ -127,7 +127,10 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({ onViewChange }) =
             description: plan.description,
             budget: plan.budget,
             venue: plan.venue,
-            // Include other necessary props for demo display/interaction
+            food: plan.food,
+            decorator: plan.decorator,
+            entertainment: plan.entertainment,
+            participants: plan.participants,
         },
         backgroundColor: '#10B981',
         borderColor: '#10B981',
@@ -142,7 +145,6 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({ onViewChange }) =
   // Determine events to display based on auth status
   const displayEvents = isDemoMode
     ? demoEvents
-    // Map authenticated user's events
     : (events || []).map((event) => ({
         id: event.id.toString(),
         title: event.title,
@@ -410,12 +412,13 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({ onViewChange }) =
   };
 
   return (
-    <div className="relative">
-      <div className={calendarClassNames}>
-        {isUserError && <p className="text-red-500">Failed to fetch user information.</p>}
+    <div className="relative mx-auto w-[95%]">
+      <div className={`w-full h-[60vh] ${
+        isDarkMode ? "bg-black-300 text-white dark-mode-calendar" : "bg-grey-300 text-black"
+      }`}>
         {isDemoMode && (
           <div className="mt-4 mb-4 p-3 text-center bg-yellow-100 border border-yellow-300 text-yellow-800 rounded-lg">
-            Showing Demo Data. <Link href="/auth" className="font-bold underline">Sign in</Link> or <Link href="/auth" className="font-bold underline">Sign up</Link> to manage your calendar.
+            Showing Demo Data. <Link href="#" className="font-bold underline">Sign in</Link> or <Link href="#" className="font-bold underline">Sign up</Link> to manage your calendar.
           </div>
         )}
         {!isServerOnline && (
@@ -509,10 +512,8 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({ onViewChange }) =
             setSelectedEvent(null);
             setSelectedDate(undefined);
           }}
-          // Pass the correct onSubmit signature
-          onSubmit={(data) => handleModalSubmit({ ...data })}
+          onSubmit={handleModalSubmit}
           selectedDateRange={selectedDate ? { start: selectedDate.startStr, end: selectedDate.endStr } : undefined}
-          
         />
       )}
     </div>
