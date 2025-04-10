@@ -9,7 +9,7 @@ const GroupCalendarScreen = () => {
 
   const [currentView, setCurrentView] = useState('dayGridMonth');
 
-  const containerHeight = currentView === 'dayGridMonth' ? 'h-[120vh]' : 'h-[220vh]';
+  const containerHeight = currentView === 'dayGridMonth' ? 'h-[200vh]' : 'h-[280vh]';
 
   if (!groupId) return <p>Loading...</p>;
 

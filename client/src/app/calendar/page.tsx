@@ -6,7 +6,7 @@ import CalendarComponent from '@/components/CalendarComponent/CalendarComponent'
 const CalendarScreen = () => {
   const [currentView, setCurrentView] = useState('dayGridMonth');
 
-  const containerHeight = currentView === 'dayGridMonth' ? 'h-[100vh]' : 'h-[200vh]';
+  const containerHeight = currentView === 'dayGridMonth' ? 'h-[160vh]' : 'h-[260vh]';
 
   return (
     <div className={containerHeight}>
